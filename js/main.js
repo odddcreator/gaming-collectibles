@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'https://gaming-collectibles-api.onrender.com', // Replace with your Render backend URL
+    API_BASE_URL: 'dicksoutforharambe', // Replace with your Render backend URL
     MERCADOPAGO_PUBLIC_KEY: 'APP_USR-5ec7f48e-be4d-4a1f-8a41-cb4fa93d0e8f',
     GOOGLE_CLIENT_ID: '901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com',
     MONGODB_URI: 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
