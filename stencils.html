@@ -3,120 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stencils - Gaming Collectibles</title>
+    <title>Stencils - 3D CutLabs</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/shop.css">
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
-        <div class="container">
+        <nav class="navbar">
             <div class="nav-brand">
-                <img src="images/logo.png" alt="Logo" class="logo">
-                <span>LOGO.png</span>
+                <img src="assets/logo.png" alt="3D CutLabs" class="logo">
             </div>
-            <nav class="nav-menu">
+            <div class="nav-menu">
                 <a href="index.html">Início</a>
-                <span class="separator">|</span>
                 <a href="action-figures.html">Loja Action Figures</a>
-                <span class="separator">|</span>
-                <a href="stencils.html">Loja Stencils</a>
-            </nav>
+                <a href="stencils.html" class="active">Loja Stencils</a>
+            </div>
             <div class="nav-actions">
-                <div class="user-menu">
-                    <span class="user-icon">👤</span>
+                <div class="user-menu" id="userMenu">
                     <span id="userDisplay">User / Cadastro</span>
-                    <div class="user-dropdown">
-                        <a href="login.html" id="loginLink">Login</a>
-                        <a href="profile.html" id="profileLink" style="display:none;">Perfil</a>
-                        <a href="#" id="logoutLink" style="display:none;">Logout</a>
-                    </div>
                 </div>
-                <div class="cart-icon" onclick="window.location.href='cart.html'">
-                    <span>🛒</span>
-                    <span class="cart-count" id="cartCount">0</span>
+                <div class="cart-icon" onclick="openCart()">
+                    🛒 <span id="cartCount">0</span>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
-    <!-- Shop Header -->
-    <section class="shop-header">
+    <main class="shop-content">
         <div class="container">
-            <h1>Stencils</h1>
-            <p>Recortes vetorizados para pintura DIY</p>
-        </div>
-    </section>
+            <h1 class="page-title">Stencils DIY</h1>
+            <p class="page-description">
+                Transforme suas paredes com nossos stencils vetorizados de alta qualidade. 
+                Perfeitos para decoração DIY com personagens de jogos e designs únicos.
+            </p>
+            
+            <div class="shop-filters">
+                <div class="filter-group">
+                    <label for="sortBy">Ordenar por:</label>
+                    <select id="sortBy" onchange="sortProducts()">
+                        <option value="name">Nome</option>
+                        <option value="price">Menor Preço</option>
+                        <option value="price-desc">Maior Preço</option>
+                        <option value="newest">Mais Recentes</option>
+                    </select>
+                </div>
+                
+                <div class="search-bar">
+                    <input type="text" id="searchInput" class="search-input" placeholder="Buscar stencils...">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filterGame">Jogo:</label>
+                    <select id="filterGame" onchange="filterProducts()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filterSize">Tamanho:</label>
+                    <select id="filterSize" onchange="filterProducts()">
+                        <option value="">Todos</option>
+                        <option value="small">Pequeno (A4)</option>
+                        <option value="medium">Médio (A3)</option>
+                        <option value="large">Grande (A2)</option>
+                        <option value="custom">Personalizado</option>
+                    </select>
+                </div>
+            </div>
 
-    <!-- Shop Content -->
-    <section class="shop-content">
-        <div class="container">
-            <div class="shop-filters mb-20">
-                <input type="text" id="searchInput" placeholder="Buscar stencils..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                <select id="sortSelect" style="padding: 10px; margin-left: 15px; border: 1px solid #ddd; border-radius: 4px;">
-                    <option value="name">Ordenar por Nome</option>
-                    <option value="price-low">Menor Preço</option>
-                    <option value="price-high">Maior Preço</option>
-                </select>
+            <div class="stencil-categories">
+                <div class="category-tabs">
+                    <button class="category-tab active" onclick="filterByCategory('')">Todos</button>
+                    <button class="category-tab" onclick="filterByCategory('character')">Personagens</button>
+                    <button class="category-tab" onclick="filterByCategory('logo')">Logos</button>
+                    <button class="category-tab" onclick="filterByCategory('symbol')">Símbolos</button>
+                    <button class="category-tab" onclick="filterByCategory('pattern')">Padrões</button>
+                </div>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+                <!-- Stencils serão carregados dinamicamente -->
             </div>
             
-            <div class="products-grid" id="stencilsGrid">
-                <div class="loading">Carregando stencils...</div>
+            <div class="stencil-info">
+                <div class="info-section">
+                    <h2>Como usar seus Stencils</h2>
+                    <div class="info-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h3>Receba seu Stencil</h3>
+                                <p>Stencil cortado a laser em material resistente, pronto para uso.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h3>Posicione na Parede</h3>
+                                <p>Use fita adesiva para fixar o stencil na posição desejada.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h3>Aplique a Tinta</h3>
+                                <p>Use pincel ou rolo para aplicar tinta sobre o stencil.</p>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h3>Remova e Admire</h3>
+                                <p>Retire cuidadosamente o stencil e veja o resultado incrível!</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <h2>Especificações Técnicas</h2>
+                    <div class="specs-grid">
+                        <div class="spec-item">
+                            <h4>Material</h4>
+                            <p>PVC flexível de alta qualidade</p>
+                        </div>
+                        <div class="spec-item">
+                            <h4>Espessura</h4>
+                            <p>0.25mm - ideal para detalhes precisos</p>
+                        </div>
+                        <div class="spec-item">
+                            <h4>Durabilidade</h4>
+                            <p>Reutilizável por centenas de aplicações</p>
+                        </div>
+                        <div class="spec-item">
+                            <h4>Limpeza</h4>
+                            <p>Fácil limpeza com água e sabão</p>
+                        </div>
+                        <div class="spec-item">
+                            <h4>Precisão</h4>
+                            <p>Corte a laser para bordas perfeitas</p>
+                        </div>
+                        <div class="spec-item">
+                            <h4>Flexibilidade</h4>
+                            <p>Adapta-se a superfícies curvas</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </section>
+    </main>
 
-    <!-- Footer -->
     <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>ATENDIMENTO AO CLIENTE</h3>
-                    <ul>
-                        <li><a href="#">Como Comprar</a></li>
-                        <li><a href="#">Métodos de Pagamento</a></li>
-                        <li><a href="#">Garantia</a></li>
-                        <li><a href="#">Devolução e Reembolso</a></li>
-                        <li><a href="#">Fale Conosco</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>PAGAMENTO</h3>
-                    <div class="payment-icons">
-                        <img src="https://via.placeholder.com/50x30?text=VISA" alt="Visa">
-                        <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard">
-                        <img src="https://via.placeholder.com/50x30?text=ELO" alt="Elo">
-                        <img src="https://via.placeholder.com/50x30?text=AMEX" alt="American Express">
-                        <img src="https://via.placeholder.com/50x30?text=PIX" alt="PIX">
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>SIGA-NOS</h3>
-                    <div class="social-links">
-                        <a href="#">📷 Instagram</a>
-                        <a href="#">🎵 TikTok</a>
-                        <a href="#">📱 WhatsApp</a>
-                    </div>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>ATENDIMENTO AO CLIENTE</h3>
+                <ul>
+                    <li><a href="#">Como Comprar</a></li>
+                    <li><a href="#">Métodos de Pagamento</a></li>
+                    <li><a href="#">Garantia</a></li>
+                    <li><a href="#">Devolução e Reembolso</a></li>
+                    <li><a href="#">Fale Conosco</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>PAGAMENTO</h3>
+                <div class="payment-icons">
+                    <img src="assets/payment-icons/visa.png" alt="Visa">
+                    <img src="assets/payment-icons/mastercard.png" alt="Mastercard">
+                    <img src="assets/payment-icons/hipercard.png" alt="Hipercard">
+                    <img src="assets/payment-icons/elo.png" alt="Elo">
+                    <img src="assets/payment-icons/amex.png" alt="American Express">
+                    <img src="assets/payment-icons/boleto.png" alt="Boleto">
+                    <img src="assets/payment-icons/pix.png" alt="PIX">
                 </div>
             </div>
-            <div class="footer-bottom">
-                <p>© 2025. Todos os direitos reservados</p>
+            <div class="footer-section">
+                <h3>SIGA-NOS</h3>
+                <div class="social-links">
+                    <a href="#" target="_blank">Instagram</a>
+                    <a href="#" target="_blank">TikTok</a>
+                    <a href="#" target="_blank">WhatsApp</a>
+                </div>
             </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025. Todos os direitos reservados</p>
         </div>
     </footer>
 
-    <script src="js/main.js"></script>
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2>Carrinho de Compras</h2>
+            <div id="cartItems"></div>
+            <div class="cart-total">
+                <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+            </div>
+            <button class="btn btn-primary" onclick="proceedToCheckout()">Finalizar Compra</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <h2>Login</h2>
+            <div id="g_id_onload"
+                 data-client_id="901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
+        </div>
+    </div>
+
     <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/shop.js"></script>
+    
+    <style>
+        .page-description {
+            text-align: center;
+            color: #6b7280;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .stencil-categories {
+            margin-bottom: 2rem;
+        }
+        
+        .category-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .category-tab {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .category-tab.active,
+        .category-tab:hover {
+            border-color: #1e3a8a;
+            background-color: #1e3a8a;
+            color: white;
+        }
+        
+        .stencil-info {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 2px solid #e5e7eb;
+        }
+        
+        .info-section {
+            margin-bottom: 3rem;
+        }
+        
+        .info-section h2 {
+            text-align: center;
+            color: #1e3a8a;
+            margin-bottom: 2rem;
+            font-size: 2rem;
+        }
+        
+        .info-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .step-number {
+            width: 40px;
+            height: 40px;
+            background: #1e3a8a;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+        
+        .step-content h3 {
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+        
+        .step-content p {
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .spec-item {
+            text-align: center;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .spec-item h4 {
+            color: #1e3a8a;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .spec-item p {
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        @media (max-width: 768px) {
+            .info-steps {
+                grid-template-columns: 1fr;
+            }
+            
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .category-tabs {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding-bottom: 0.5rem;
+            }
+            
+            .category-tab {
+                white-space: nowrap;
+            }
+        }
+    </style>
+    
     <script>
+        // Funcionalidade específica para stencils
+        let currentStencilCategory = '';
+        
+        function filterByCategory(category) {
+            currentStencilCategory = category;
+            
+            // Atualizar visual das abas
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Aplicar filtro
+            filterProducts();
+        }
+        
+        // Override da função de filtro para incluir categoria de stencil
+        window.originalFilterProducts = window.filterProducts;
+        window.filterProducts = function() {
+            const gameFilter = document.getElementById('filterGame');
+            const sizeFilter = document.getElementById('filterSize');
+            const selectedGame = gameFilter ? gameFilter.value : '';
+            const selectedSize = sizeFilter ? sizeFilter.value : '';
+            
+            filteredProducts = allProducts.filter(product => {
+                const matchesGame = !selectedGame || product.game === selectedGame;
+                const matchesSize = !selectedSize || product.size === selectedSize;
+                const matchesCategory = !currentStencilCategory || product.subcategory === currentStencilCategory;
+                const matchesSearch = !searchQuery || 
+                    product.name.toLowerCase().includes(searchQuery) ||
+                    product.game.toLowerCase().includes(searchQuery) ||
+                    (product.description && product.description.toLowerCase().includes(searchQuery));
+                
+                return matchesGame && matchesSize && matchesCategory && matchesSearch;
+            });
+            
+            currentPage = 1;
+            sortProducts();
+        };
+        
+        // Configurar filtros específicos para stencils
         document.addEventListener('DOMContentLoaded', function() {
-            loadProducts('stencil');
-            
-            document.getElementById('searchInput').addEventListener('input', function() {
-                filterProducts();
-            });
-            
-            document.getElementById('sortSelect').addEventListener('change', function() {
-                sortProducts(this.value);
-            });
+            // Adicionar filtro de tamanho específico para stencils
+            const sizeFilter = document.getElementById('filterSize');
+            if (sizeFilter) {
+                sizeFilter.addEventListener('change', filterProducts);
+            }
         });
     </script>
 </body>

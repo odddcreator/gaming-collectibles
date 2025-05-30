@@ -3,124 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Action Figures - Gaming Collectibles</title>
+    <title>Action Figures - 3D CutLabs</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/shop.css">
 </head>
 <body>
-    <!-- Header (same as index) -->
     <header class="header">
-        <div class="container">
+        <nav class="navbar">
             <div class="nav-brand">
-                <img src="images/logo.png" alt="Logo" class="logo">
-                <span>LOGO.png</span>
+                <img src="assets/logo.png" alt="3D CutLabs" class="logo">
             </div>
-            <nav class="nav-menu">
+            <div class="nav-menu">
                 <a href="index.html">Início</a>
-                <span class="separator">|</span>
-                <a href="action-figures.html">Loja Action Figures</a>
-                <span class="separator">|</span>
+                <a href="action-figures.html" class="active">Loja Action Figures</a>
                 <a href="stencils.html">Loja Stencils</a>
-            </nav>
+            </div>
             <div class="nav-actions">
-                <div class="user-menu">
-                    <span class="user-icon">👤</span>
+                <div class="user-menu" id="userMenu">
                     <span id="userDisplay">User / Cadastro</span>
-                    <div class="user-dropdown">
-                        <a href="login.html" id="loginLink">Login</a>
-                        <a href="profile.html" id="profileLink" style="display:none;">Perfil</a>
-                        <a href="#" id="logoutLink" style="display:none;">Logout</a>
-                    </div>
                 </div>
-                <div class="cart-icon" onclick="window.location.href='cart.html'">
-                    <span>🛒</span>
-                    <span class="cart-count" id="cartCount">0</span>
+                <div class="cart-icon" onclick="openCart()">
+                    🛒 <span id="cartCount">0</span>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
-    <!-- Shop Header -->
-    <section class="shop-header">
+    <main class="shop-content">
         <div class="container">
-            <h1>Action Figures</h1>
-            <p>Personagens únicos de MMORPGs e jogos indie</p>
-        </div>
-    </section>
-
-    <!-- Shop Content -->
-    <section class="shop-content">
-        <div class="container">
-            <div class="shop-filters mb-20">
-                <input type="text" id="searchInput" placeholder="Buscar produtos..." style="padding: 10px; width: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                <select id="sortSelect" style="padding: 10px; margin-left: 15px; border: 1px solid #ddd; border-radius: 4px;">
-                    <option value="name">Ordenar por Nome</option>
-                    <option value="price-low">Menor Preço</option>
-                    <option value="price-high">Maior Preço</option>
-                </select>
-            </div>
+            <h1 class="page-title">Action Figures</h1>
             
-            <div class="products-grid" id="actionFiguresGrid">
-                <div class="loading">Carregando produtos...</div>
+            <div class="shop-filters">
+                <div class="filter-group">
+                    <label for="sortBy">Ordenar por:</label>
+                    <select id="sortBy" onchange="sortProducts()">
+                        <option value="name">Nome</option>
+                        <option value="price">Preço</option>
+                        <option value="newest">Mais Recentes</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="filterGame">Jogo:</label>
+                    <select id="filterGame" onchange="filterProducts()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
             </div>
-        </div>
-    </section>
 
-    <!-- Footer (same as index) -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>ATENDIMENTO AO CLIENTE</h3>
-                    <ul>
-                        <li><a href="#">Como Comprar</a></li>
-                        <li><a href="#">Métodos de Pagamento</a></li>
-                        <li><a href="#">Garantia</a></li>
-                        <li><a href="#">Devolução e Reembolso</a></li>
-                        <li><a href="#">Fale Conosco</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>PAGAMENTO</h3>
-                    <div class="payment-icons">
-                        <img src="https://via.placeholder.com/50x30?text=VISA" alt="Visa">
-                        <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard">
-                        <img src="https://via.placeholder.com/50x30?text=ELO" alt="Elo">
-                        <img src="https://via.placeholder.com/50x30?text=AMEX" alt="American Express">
-                        <img src="https://via.placeholder.com/50x30?text=PIX" alt="PIX">
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>SIGA-NOS</h3>
-                    <div class="social-links">
-                        <a href="#">📷 Instagram</a>
-                        <a href="#">🎵 TikTok</a>
-                        <a href="#">📱 WhatsApp</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2025. Todos os direitos reservados</p>
+            <div class="products-grid" id="productsGrid">
+                <!-- Produtos serão carregados dinamicamente -->
             </div>
         </div>
+    </main>
+
+    <footer class="footer">
+        <!-- Same footer as index.html -->
     </footer>
 
-    <script src="js/main.js"></script>
     <script src="js/auth.js"></script>
-    <script>
-        // Load action figures on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProducts('action-figure');
-            
-            // Search functionality
-            document.getElementById('searchInput').addEventListener('input', function() {
-                filterProducts();
-            });
-            
-            // Sort functionality
-            document.getElementById('sortSelect').addEventListener('change', function() {
-                sortProducts(this.value);
-            });
-        });
-    </script>
+    <script src="js/cart.js"></script>
+    <script src="js/shop.js"></script>
 </body>
 </html>

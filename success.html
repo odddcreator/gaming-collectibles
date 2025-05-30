@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Aprovado - 3D CutLabs</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .success-container {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            margin-top: 80px;
+        }
+        
+        .success-card {
+            background: white;
+            padding: 3rem;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background: #10b981;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+        
+        .success-title {
+            color: #065f46;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .success-message {
+            color: #6b7280;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .order-info {
+            background: #f0fdf4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            border-left: 4px solid #10b981;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="assets/logo.png" alt="3D CutLabs" class="logo">
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Início</a>
+                <a href="action-figures.html">Loja Action Figures</a>
+                <a href="stencils.html">Loja Stencils</a>
+            </div>
+            <div class="nav-actions">
+                <div class="user-menu" id="userMenu">
+                    <span id="userDisplay">User / Cadastro</span>
+                </div>
+                <div class="cart-icon" onclick="openCart()">
+                    🛒 <span id="cartCount">0</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="success-container">
+        <div class="success-card">
+            <div class="success-icon">✓</div>
+            <h1 class="success-title">Pagamento Aprovado!</h1>
+            <p class="success-message">
+                Seu pedido foi processado com sucesso. Você receberá um email com os detalhes 
+                e atualizações sobre o status do seu pedido.
+            </p>
+            
+            <div class="order-info" id="orderInfo">
+                <strong>Número do Pedido:</strong> <span id="orderNumber">Carregando...</span>
+            </div>
+            
+            <div class="actions">
+                <a href="profile.html" class="btn btn-primary">Ver Meus Pedidos</a>
+                <a href="index.html" class="btn btn-secondary">Continuar Comprando</a>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Obter número do pedido da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('order');
+        
+        if (orderId) {
+            document.getElementById('orderNumber').textContent = orderId;
+        } else {
+            document.getElementById('orderNumber').textContent = 'Não disponível';
+        }
+        
+        // Limpar carrinho
+        localStorage.removeItem('cart');
+    </script>
+</body>
+</html>

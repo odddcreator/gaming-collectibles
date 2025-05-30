@@ -3,249 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin - Gaming Collectibles</title>
+    <title>Painel Admin - 3D CutLabs</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="container">
-            <div class="nav-brand">
-                <img src="images/logo.png" alt="Logo" class="logo">
-                <span>LOGO.png</span>
+    <div class="admin-container">
+        <div class="admin-sidebar">
+            <div class="admin-logo">
+                <img src="assets/logo.png" alt="3D CutLabs">
+                <h2>Admin Panel</h2>
             </div>
-            <nav class="nav-menu">
-                <a href="index.html">Início</a>
-                <span class="separator">|</span>
-                <a href="action-figures.html">Loja Action Figures</a>
-                <span class="separator">|</span>
-                <a href="stencils.html">Loja Stencils</a>
+            <nav class="admin-nav">
+                <a href="#" onclick="showSection('dashboard')" class="nav-item active">Dashboard</a>
+                <a href="#" onclick="showSection('products')" class="nav-item">Produtos</a>
+                <a href="#" onclick="showSection('orders')" class="nav-item">Pedidos</a>
+                <a href="#" onclick="showSection('users')" class="nav-item">Usuários</a>
+                <a href="#" onclick="logout()" class="nav-item">Sair</a>
             </nav>
-            <div class="nav-actions">
-                <div class="user-menu">
-                    <span class="user-icon">👤</span>
-                    <span id="userDisplay">Admin</span>
-                    <div class="user-dropdown">
-                        <a href="#" id="logoutLink">Logout</a>
+        </div>
+        
+        <div class="admin-main">
+            <header class="admin-header">
+                <h1 id="sectionTitle">Dashboard</h1>
+                <div class="admin-user">
+                    <span id="adminUserName">Admin</span>
+                </div>
+            </header>
+            
+            <div class="admin-content">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="admin-section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3>Total de Produtos</h3>
+                            <p class="stat-number" id="totalProducts">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Pedidos Pendentes</h3>
+                            <p class="stat-number" id="pendingOrders">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Usuários Cadastrados</h3>
+                            <p class="stat-number" id="totalUsers">0</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3>Vendas do Mês</h3>
+                            <p class="stat-number" id="monthSales">R$ 0,00</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Products Section -->
+                <div id="products" class="admin-section">
+                    <div class="section-header">
+                        <button class="btn btn-primary" onclick="showAddProductForm()">Adicionar Produto</button>
+                    </div>
+                    
+                    <div class="products-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Imagem</th>
+                                    <th>Nome</th>
+                                    <th>Categoria</th>
+                                    <th>Preço Base</th>
+                                    <th>Estoque</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- Produtos serão carregados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Orders Section -->
+                <div id="orders" class="admin-section">
+                    <div class="orders-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Cliente</th>
+                                    <th>Data</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ordersTableBody">
+                                <!-- Pedidos serão carregados aqui -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Users Section -->
+                <div id="users" class="admin-section">
+                    <div class="users-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Data Cadastro</th>
+                                    <th>Total Pedidos</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Usuários serão carregados aqui -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-    </header>
-
-    <!-- Admin Content -->
-    <section class="admin-container">
-        <div class="container">
-            <h1>Painel Administrativo</h1>
-            
-            <div class="admin-nav">
-                <button class="admin-nav-btn active" onclick="showAdminSection('products')">Produtos</button>
-                <button class="admin-nav-btn" onclick="showAdminSection('orders')">Pedidos</button>
-                <button class="admin-nav-btn" onclick="showAdminSection('users')">Usuários</button>
-                <button class="admin-nav-btn" onclick="showAdminSection('reports')">Relatórios</button>
-            </div>
-            
-            <!-- Products Section -->
-            <div class="admin-section" id="productsSection">
-                <div class="section-header">
-                    <h2>Gerenciar Produtos</h2>
-                    <button class="btn btn-primary" onclick="showAddProductForm()">Adicionar Produto</button>
-                </div>
-                
-                <!-- Add/Edit Product Form -->
-                <div class="product-form hidden" id="productForm">
-                    <h3 id="formTitle">Adicionar Novo Produto</h3>
-                    <form id="addProductForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="productName">Nome do Produto:</label>
-                                <input type="text" id="productName" name="name" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="productType">Tipo:</label>
-                                <select id="productType" name="type" required>
-                                    <option value="action-figure">Action Figure</option>
-                                    <option value="stencil">Stencil</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productDescription">Descrição:</label>
-                            <textarea id="productDescription" name="description" rows="4"></textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="basePrice">Preço Base (sem pintura, tamanho mínimo):</label>
-                                <input type="number" id="basePrice" name="basePrice" step="0.01" required>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="stock">Estoque:</label>
-                                <input type="number" id="stock" name="stock" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="productImages">Imagens do Produto:</label>
-                            <input type="file" id="productImages" name="images" multiple accept="image/*">
-                            <div class="image-preview" id="imagePreview"></div>
-                        </div>
-                        
-                        <div class="form-group" id="actionFigureOptions">
-                            <label>Opções para Action Figures:</label>
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" name="sizes" value="small" checked> Pequeno (18cm) - 1x</label>
-                                <label><input type="checkbox" name="sizes" value="medium"> Médio (22cm) - 1.25x</label>
-                                <label><input type="checkbox" name="sizes" value="large"> Grande (26cm) - 1.5x</label>
-                            </div>
-                            <div class="checkbox-group">
-                                <label><input type="checkbox" name="paintOptions" value="with" checked> Com pintura - 1.75x</label>
-                                <label><input type="checkbox" name="paintOptions" value="without" checked> Sem pintura - 1x</label>
-                            </div>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-secondary" onclick="cancelProductForm()">Cancelar</button>
-                            <button type="submit" class="btn btn-primary">Salvar Produto</button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Products List -->
-                <div class="product-list">
-                    <div class="list-controls">
-                        <input type="text" id="productSearch" placeholder="Buscar produtos..." class="search-input">
-                        <select id="productFilter" class="filter-select">
-                            <option value="all">Todos os produtos</option>
-                            <option value="action-figure">Action Figures</option>
-                            <option value="stencil">Stencils</option>
+    </div>
+    
+    <!-- Add Product Modal -->
+    <div id="addProductModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeAddProductForm()">&times;</span>
+            <h2>Adicionar Produto</h2>
+            <form id="addProductForm" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="productName">Nome do Produto:</label>
+                        <input type="text" id="productName" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productCategory">Categoria:</label>
+                        <select id="productCategory" name="category" required>
+                            <option value="action-figure">Action Figure</option>
+                            <option value="stencil">Stencil</option>
                         </select>
                     </div>
                     
-                    <table class="product-table">
-                        <thead>
-                            <tr>
-                                <th>Imagem</th>
-                                <th>Nome</th>
-                                <th>Tipo</th>
-                                <th>Preço Base</th>
-                                <th>Estoque</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="productsTableBody">
-                            <tr>
-                                <td colspan="7" class="loading">Carregando produtos...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Orders Section -->
-            <div class="admin-section hidden" id="ordersSection">
-                <h2>Gerenciar Pedidos</h2>
-                <div class="orders-stats">
-                    <div class="stat-card">
-                        <h3>Novos Pedidos</h3>
-                        <div class="stat-number" id="newOrders">0</div>
+                    <div class="form-group">
+                        <label for="productGame">Jogo:</label>
+                        <input type="text" id="productGame" name="game" required>
                     </div>
-                    <div class="stat-card">
-                        <h3>Em Processamento</h3>
-                        <div class="stat-number" id="processingOrders">0</div>
+                    
+                    <div class="form-group">
+                        <label for="productPrice">Preço Base (R$):</label>
+                        <input type="number" id="productPrice" name="basePrice" step="0.01" required>
                     </div>
-                    <div class="stat-card">
-                        <h3>Enviados</h3>
-                        <div class="stat-number" id="shippedOrders">0</div>
+                    
+                    <div class="form-group">
+                        <label for="productWeight">Peso (g):</label>
+                        <input type="number" id="productWeight" name="weight" required>
                     </div>
-                    <div class="stat-card">
-                        <h3>Entregues</h3>
-                        <div class="stat-number" id="deliveredOrders">0</div>
+                    
+                    <div class="form-group">
+                        <label for="productStock">Estoque:</label>
+                        <input type="number" id="productStock" name="stock" min="0">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="productDescription">Descrição:</label>
+                        <textarea id="productDescription" name="description" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="productImages">Imagens:</label>
+                        <input type="file" id="productImages" name="images" multiple accept="image/*" required>
+                        <div id="imagePreview" class="image-preview"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="productFeatured" name="featured">
+                            Produto em destaque
+                        </label>
                     </div>
                 </div>
                 
-                <table class="product-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Cliente</th>
-                            <th>Data</th>
-                            <th>Total</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTableBody">
-                        <tr>
-                            <td colspan="6" class="loading">Carregando pedidos...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Users Section -->
-            <div class="admin-section hidden" id="usersSection">
-                <h2>Gerenciar Usuários</h2>
-                <table class="product-table">
-                    <thead>
-                        <tr>
-                            <th>Nome</th>
-                            <th>E-mail</th>
-                            <th>Data de Cadastro</th>
-                            <th>Pedidos</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <tr>
-                            <td colspan="6" class="loading">Carregando usuários...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Reports Section -->
-            <div class="admin-section hidden" id="reportsSection">
-                <h2>Relatórios</h2>
-                <div class="reports-grid">
-                    <div class="report-card">
-                        <h3>Vendas do Mês</h3>
-                        <div class="report-value">R$ 12.450,00</div>
-                        <div class="report-change positive">+15% vs mês anterior</div>
-                    </div>
-                    <div class="report-card">
-                        <h3>Produtos Vendidos</h3>
-                        <div class="report-value">87</div>
-                        <div class="report-change positive">+23% vs mês anterior</div>
-                    </div>
-                    <div class="report-card">
-                        <h3>Novos Clientes</h3>
-                        <div class="report-value">34</div>
-                        <div class="report-change positive">+8% vs mês anterior</div>
-                    </div>
-                    <div class="report-card">
-                        <h3>Ticket Médio</h3>
-                        <div class="report-value">R$ 143,10</div>
-                        <div class="report-change negative">-3% vs mês anterior</div>
-                    </div>
+                <div class="form-actions">
+                    <button type="button" onclick="closeAddProductForm()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Produto</button>
                 </div>
-                
-                <div class="reports-actions">
-                    <button class="btn btn-primary">Exportar Relatório de Vendas</button>
-                    <button class="btn btn-secondary">Exportar Lista de Produtos</button>
-                    <button class="btn btn-secondary">Exportar Lista de Clientes</button>
-                </div>
-            </div>
+            </form>
         </div>
-    </section>
+    </div>
 
-    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>

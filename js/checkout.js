@@ -1,470 +1,412 @@
-// Checkout functionality
+let currentStep = 1;
+let shippingData = {};
+let selectedShippingMethod = null;
+let orderData = {};
+
 document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.pathname.includes('checkout.html')) {
-        initializeCheckout();
+    // Verificar se há itens no carrinho
+    if (cart.length === 0) {
+        alert('Seu carrinho está vazio');
+        window.location.href = 'index.html';
+        return;
     }
+    
+    // Verificar se o usuário está logado
+    if (!currentUser) {
+        alert('Faça login para continuar');
+        window.location.href = 'index.html';
+        return;
+    }
+    
+    initializeCheckout();
 });
 
 function initializeCheckout() {
-    if (!isLoggedIn()) {
-        window.location.href = 'login.html?redirect=checkout.html';
-        return;
-    }
-    
-    if (cart.length === 0) {
-        window.location.href = 'cart.html';
-        return;
-    }
-    
-    loadCheckoutData();
-    setupCheckoutEventListeners();
+    updateCartDisplay();
+    loadUserData();
+    updateOrderSidebar();
+    updateSummary();
 }
 
-function loadCheckoutData() {
-    displayOrderSummary();
-    loadUserAddresses();
-    initializeMercadoPago();
-}
-
-function displayOrderSummary() {
-    const orderSummary = document.getElementById('orderSummary');
-    if (!orderSummary) return;
-    
-    const subtotal = getCartTotal();
-    const shipping = getSelectedShippingCost();
-    const total = subtotal + shipping;
-    
-    orderSummary.innerHTML = `
-        <div class="order-items">
-            ${cart.map(item => `
-                <div class="order-item">
-                    <div class="item-image">
-                        <img src="${item.image || 'https://via.placeholder.com/60x60'}" alt="${item.name}">
-                    </div>
-                    <div class="item-details">
-                        <h4>${item.name}</h4>
-                        <p>Tamanho: ${item.size || 'Padrão'}</p>
-                        <p>Pintura: ${item.paint || 'Sem pintura'}</p>
-                        <p>Quantidade: ${item.quantity}</p>
-                    </div>
-                    <div class="item-price">
-                        ${formatCurrency(item.price * item.quantity)}
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-        <div class="order-totals">
-            <div class="total-line">
-                <span>Subtotal:</span>
-                <span>${formatCurrency(subtotal)}</span>
-            </div>
-            <div class="total-line">
-                <span>Frete:</span>
-                <span>${shipping > 0 ? formatCurrency(shipping) : 'A calcular'}</span>
-            </div>
-            <div class="total-line total-final">
-                <span>Total:</span>
-                <span>${formatCurrency(total)}</span>
-            </div>
-        </div>
-    `;
-}
-
-function loadUserAddresses() {
-    const addressSelect = document.getElementById('deliveryAddress');
-    if (!addressSelect || !currentUser) return;
-    
-    // Se o usuário tem endereço cadastrado
-    if (currentUser.address && currentUser.address.zipCode) {
-        addressSelect.innerHTML = `
-            <option value="default">
-                ${currentUser.address.street}, ${currentUser.address.number} - 
-                ${currentUser.address.neighborhood}, ${currentUser.address.city}/${currentUser.address.state}
-            </option>
-            <option value="new">Usar outro endereço</option>
-        `;
-    } else {
-        addressSelect.innerHTML = '<option value="new">Cadastrar endereço de entrega</option>';
+function loadUserData() {
+    if (currentUser && currentUser.address) {
+        const address = currentUser.address;
+        document.getElementById('fullName').value = currentUser.fullName || '';
+        document.getElementById('phone').value = currentUser.phone || '';
+        document.getElementById('zipCode').value = address.zipCode || '';
+        document.getElementById('state').value = address.state || '';
+        document.getElementById('city').value = address.city || '';
+        document.getElementById('neighborhood').value = address.neighborhood || '';
+        document.getElementById('street').value = address.street || '';
+        document.getElementById('number').value = address.number || '';
+        document.getElementById('complement').value = address.complement || '';
     }
 }
 
-async function initializeMercadoPago() {
-    try {
-        if (typeof MercadoPago !== 'undefined' && CONFIG.MERCADOPAGO_PUBLIC_KEY) {
-            const mp = new MercadoPago(CONFIG.MERCADOPAGO_PUBLIC_KEY, {
-                locale: 'pt-BR'
-            });
-            
-            // Initialize card form
-            const cardForm = mp.cardForm({
-                amount: getCartTotal().toString(),
-                iframe: true,
-                form: {
-                    id: "form-checkout",
-                    cardNumber: {
-                        id: "form-checkout__cardNumber",
-                        placeholder: "Número do cartão",
-                    },
-                    expirationDate: {
-                        id: "form-checkout__expirationDate",
-                        placeholder: "MM/YY",
-                    },
-                    securityCode: {
-                        id: "form-checkout__securityCode",
-                        placeholder: "Código de segurança",
-                    },
-                    cardholderName: {
-                        id: "form-checkout__cardholderName",
-                        placeholder: "Titular do cartão",
-                    },
-                    issuer: {
-                        id: "form-checkout__issuer",
-                        placeholder: "Banco emissor",
-                    },
-                    installments: {
-                        id: "form-checkout__installments",
-                        placeholder: "Parcelas",
-                    },
-                    identificationType: {
-                        id: "form-checkout__identificationType",
-                        placeholder: "Tipo de documento",
-                    },
-                    identificationNumber: {
-                        id: "form-checkout__identificationNumber",
-                        placeholder: "Número do documento",
-                    },
-                    cardholderEmail: {
-                        id: "form-checkout__cardholderEmail",
-                        placeholder: "E-mail",
-                    },
-                },
-                callbacks: {
-                    onFormMounted: error => {
-                        if (error) console.warn("Form Mounted handling error: ", error);
-                    },
-                    onSubmit: event => {
-                        event.preventDefault();
-                        processPayment(cardForm);
-                    },
-                    onFetching: (resource) => {
-                        console.log("Fetching resource: ", resource);
-                    }
-                },
-            });
+function nextStep() {
+    if (currentStep === 1) {
+        if (validateShippingForm()) {
+            collectShippingData();
+            calculateShipping();
+            showStep(2);
         }
-    } catch (error) {
-        console.error('Error initializing MercadoPago:', error);
-        showAlternativePaymentMethods();
+    } else if (currentStep === 2) {
+        updateOrderReview();
+        showStep(3);
+        initializePayment();
     }
 }
 
-function showAlternativePaymentMethods() {
-    const paymentContainer = document.getElementById('paymentContainer');
-    if (paymentContainer) {
-        paymentContainer.innerHTML = `
-            <div class="payment-methods">
-                <h3>Formas de Pagamento</h3>
-                <div class="payment-option">
-                    <input type="radio" name="paymentMethod" value="pix" id="pix">
-                    <label for="pix">PIX - À vista</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" name="paymentMethod" value="boleto" id="boleto">
-                    <label for="boleto">Boleto Bancário</label>
-                </div>
-                <div class="payment-option">
-                    <input type="radio" name="paymentMethod" value="transfer" id="transfer">
-                    <label for="transfer">Transferência Bancária</label>
-                </div>
-            </div>
-            <button type="button" class="btn btn-primary" onclick="processAlternativePayment()">
-                Finalizar Pedido
-            </button>
-        `;
+function previousStep() {
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
     }
 }
 
-async function processPayment(cardForm) {
+function showStep(step) {
+    // Esconder todas as etapas
+    document.querySelectorAll('.checkout-step').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Esconder todos os indicadores de etapa
+    document.querySelectorAll('.step').forEach(el => {
+        el.classList.remove('active');
+    });
+    
+    // Mostrar etapa atual
+    if (step === 1) {
+        document.getElementById('shippingStep').classList.add('active');
+    } else if (step === 2) {
+        document.getElementById('reviewStep').classList.add('active');
+    } else if (step === 3) {
+        document.getElementById('paymentStep').classList.add('active');
+    }
+    
+    // Ativar indicador da etapa
+    document.querySelectorAll('.step')[step - 1].classList.add('active');
+    
+    currentStep = step;
+}
+
+function validateShippingForm() {
+    const form = document.getElementById('shippingForm');
+    const formData = new FormData(form);
+    
+    for (let [key, value] of formData.entries()) {
+        if (!value.trim() && key !== 'complement') {
+            alert('Por favor, preencha todos os campos obrigatórios');
+            return false;
+        }
+    }
+    
+    if (!selectedShippingMethod) {
+        alert('Por favor, selecione um método de envio');
+        return false;
+    }
+    
+    return true;
+}
+
+function collectShippingData() {
+    const form = document.getElementById('shippingForm');
+    const formData = new FormData(form);
+    
+    shippingData = {};
+    for (let [key, value] of formData.entries()) {
+        shippingData[key] = value;
+    }
+    
+    shippingData.shippingMethod = selectedShippingMethod;
+}
+
+async function searchCEP() {
+    const cep = document.getElementById('zipCode').value.replace(/\D/g, '');
+    
+    if (cep.length === 8) {
+        try {
+            const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+            const data = await response.json();
+            
+            if (!data.erro) {
+                document.getElementById('state').value = data.uf;
+                document.getElementById('city').value = data.localidade;
+                document.getElementById('neighborhood').value = data.bairro;
+                document.getElementById('street').value = data.logradouro;
+                
+                // Calcular frete automaticamente
+                calculateShipping();
+            } else {
+                alert('CEP não encontrado');
+            }
+        } catch (error) {
+            console.error('Erro ao buscar CEP:', error);
+            alert('Erro ao buscar CEP');
+        }
+    }
+}
+
+async function calculateShipping() {
+    const cep = document.getElementById('zipCode').value.replace(/\D/g, '');
+    
+    if (cep.length !== 8) return;
+    
+    const container = document.getElementById('shippingMethodsContainer');
+    container.innerHTML = '<p>Calculando frete...</p>';
+    
     try {
-        const formData = cardForm.getCardFormData();
+        // Calcular peso total
+        const totalWeight = cart.reduce((sum, item) => {
+            const product = products.find(p => p._id === item.id);
+            return sum + (product?.weight || 100) * item.quantity;
+        }, 0);
         
-        const paymentData = {
-            transaction_amount: getCartTotal(),
-            token: formData.token,
-            description: `Pedido Gaming Collectibles - ${cart.length} item(s)`,
-            payment_method_id: formData.payment_method_id,
-            installments: Number(formData.installments),
-            issuer_id: formData.issuer_id,
-            payer: {
+        const shippingMethods = await calculateShippingOptions(cep, totalWeight);
+        
+        container.innerHTML = shippingMethods.map((method, index) => `
+            <div class="shipping-method" onclick="selectShippingMethod(${index})">
+                <div class="shipping-info">
+                    <input type="radio" name="shipping" value="${index}" id="shipping_${index}">
+                    <label for="shipping_${index}">
+                        <strong>${method.name}</strong><br>
+                        <small>${method.deliveryTime} dias úteis</small>
+                    </label>
+                </div>
+                <div class="shipping-price">R$ ${formatPrice(method.price)}</div>
+            </div>
+        `).join('');
+        
+    } catch (error) {
+        console.error('Erro ao calcular frete:', error);
+        container.innerHTML = '<p>Erro ao calcular frete. Tente novamente.</p>';
+    }
+}
+
+async function calculateShippingOptions(cep, weight) {
+    // Simulação da API dos Correios - substituir pela integração real
+    return [
+        {
+            name: 'PAC',
+            price: Math.max(15.50, weight * 0.01),
+            deliveryTime: 8
+        },
+        {
+            name: 'SEDEX',
+            price: Math.max(25.90, weight * 0.02),
+            deliveryTime: 3
+        }
+    ];
+}
+
+function selectShippingMethod(index) {
+    // Remover seleção anterior
+    document.querySelectorAll('.shipping-method').forEach(el => {
+        el.classList.remove('selected');
+    });
+    
+    // Selecionar método atual
+    document.querySelectorAll('.shipping-method')[index].classList.add('selected');
+    document.getElementById(`shipping_${index}`).checked = true;
+    
+    selectedShippingMethod = {
+        index: index,
+        name: document.querySelector(`.shipping-method:nth-child(${index + 1}) strong`).textContent,
+        price: parseFloat(document.querySelector(`.shipping-method:nth-child(${index + 1}) .shipping-price`).textContent.replace('R$ ', '').replace(',', '.')),
+        deliveryTime: parseInt(document.querySelector(`.shipping-method:nth-child(${index + 1}) small`).textContent)
+    };
+    
+    updateSummary();
+}
+
+function updateOrderSidebar() {
+    const container = document.getElementById('sidebarItems');
+    
+    container.innerHTML = cart.map(item => `
+        <div class="sidebar-item">
+            <img src="${item.image}" alt="${item.name}" class="sidebar-item-image">
+            <div class="sidebar-item-info">
+                <div class="sidebar-item-name">${item.name}</div>
+                <div class="sidebar-item-details">
+                    ${getSizeLabel(item.size)} • ${item.painting ? 'Com pintura' : 'Sem pintura'} • Qtd: ${item.quantity}
+                </div>
+                <div class="sidebar-item-price">R$ ${formatPrice(item.finalPrice * item.quantity)}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function updateSummary() {
+    const subtotal = cart.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+    const shippingCost = selectedShippingMethod ? selectedShippingMethod.price : 0;
+    const total = subtotal + shippingCost;
+    
+    // Atualizar sidebar
+    document.getElementById('sidebarSubtotal').textContent = formatPrice(subtotal);
+    document.getElementById('sidebarShipping').textContent = formatPrice(shippingCost);
+    document.getElementById('sidebarTotal').textContent = formatPrice(total);
+    
+    // Atualizar revisão
+    if (document.getElementById('reviewSubtotal')) {
+        document.getElementById('reviewSubtotal').textContent = `R$ ${formatPrice(subtotal)}`;
+        document.getElementById('reviewShipping').textContent = `R$ ${formatPrice(shippingCost)}`;
+        document.getElementById('reviewTotal').textContent = `R$ ${formatPrice(total)}`;
+    }
+    
+    // Atualizar pagamento
+    if (document.getElementById('finalTotal')) {
+        document.getElementById('finalTotal').textContent = formatPrice(total);
+    }
+}
+
+function updateOrderReview() {
+    // Atualizar endereço de entrega
+    const addressReview = document.getElementById('shippingAddressReview');
+    addressReview.innerHTML = `
+        <p><strong>${shippingData.fullName}</strong></p>
+        <p>${shippingData.street}, ${shippingData.number}</p>
+        ${shippingData.complement ? `<p>${shippingData.complement}</p>` : ''}
+        <p>${shippingData.neighborhood} - ${shippingData.city}, ${shippingData.state}</p>
+        <p>CEP: ${shippingData.zipCode}</p>
+        <p>Tel: ${shippingData.phone}</p>
+        <p><strong>Frete:</strong> ${selectedShippingMethod.name} (${selectedShippingMethod.deliveryTime} dias úteis)</p>
+    `;
+    
+    // Atualizar itens do pedido
+    const itemsReview = document.getElementById('orderItemsReview');
+    itemsReview.innerHTML = cart.map(item => `
+        <div class="review-item">
+            <img src="${item.image}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
+            <div style="flex: 1; margin-left: 1rem;">
+                <h4>${item.name}</h4>
+                <p>Tamanho: ${getSizeLabel(item.size)}</p>
+                <p>Pintura: ${item.painting ? 'Sim' : 'Não'}</p>
+                <p>Quantidade: ${item.quantity}</p>
+                <p><strong>R$ ${formatPrice(item.finalPrice * item.quantity)}</strong></p>
+            </div>
+        </div>
+    `).join('');
+    
+    updateSummary();
+}
+
+function editShipping() {
+    showStep(1);
+}
+
+async function initializePayment() {
+    try {
+        // Preparar dados do pedido
+        const subtotal = cart.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
+        const shippingCost = selectedShippingMethod.price;
+        const total = subtotal + shippingCost;
+        
+        orderData = {
+            customer: {
+                id: currentUser._id,
+                name: shippingData.fullName,
                 email: currentUser.email,
-                identification: {
-                    type: formData.identification_type,
-                    number: formData.identification_number
-                }
+                phone: shippingData.phone
+            },
+            items: cart.map(item => ({
+                productId: item.id,
+                name: item.name,
+                size: item.size,
+                painting: item.painting,
+                quantity: item.quantity,
+                unitPrice: item.finalPrice,
+                totalPrice: item.finalPrice * item.quantity
+            })),
+            shipping: {
+                address: {
+                    street: shippingData.street,
+                    number: shippingData.number,
+                    complement: shippingData.complement,
+                    neighborhood: shippingData.neighborhood,
+                    city: shippingData.city,
+                    state: shippingData.state,
+                    zipCode: shippingData.zipCode
+                },
+                method: selectedShippingMethod.name,
+                cost: shippingCost,
+                deliveryTime: selectedShippingMethod.deliveryTime
+            },
+            totals: {
+                subtotal: subtotal,
+                shipping: shippingCost,
+                total: total
             }
         };
         
-        const response = await apiRequest('/api/payment/process', {
+        // Criar preferência do Mercado Pago
+        const preference = {
+            items: [{
+                id: 'order-' + Date.now(),
+                title: `Pedido 3D CutLabs - ${cart.length} item(s)`,
+                quantity: 1,
+                unit_price: total
+            }],
+            payer: {
+                name: shippingData.fullName,
+                email: currentUser.email,
+                phone: {
+                    number: shippingData.phone
+                }
+            },
+            back_urls: {
+                success: `${window.location.origin}/success.html`,
+                failure: `${window.location.origin}/failure.html`,
+                pending: `${window.location.origin}/pending.html`
+            },
+            auto_return: 'approved',
+            external_reference: 'order-' + Date.now()
+        };
+        
+        // Criar checkout do Mercado Pago
+        const checkout = mp.checkout({
+            preference: preference
+        });
+        
+        // Renderizar checkout
+        checkout.render({
+            container: '#mercadopagoContainer',
+            label: 'Finalizar Compra'
+        });
+        
+    } catch (error) {
+        console.error('Erro ao inicializar pagamento:', error);
+        alert('Erro ao processar pagamento. Tente novamente.');
+    }
+}
+
+// Função para processar o pedido após o pagamento
+async function processOrder(paymentData) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/orders`, {
             method: 'POST',
-            body: JSON.stringify(paymentData)
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${currentUser.token}`
+            },
+            body: JSON.stringify({
+                ...orderData,
+                payment: paymentData
+            })
         });
         
-        if (response.status === 'approved') {
-            await createOrder(response.id, 'credit_card');
-            showPaymentSuccess(response.id);
+        if (response.ok) {
+            const order = await response.json();
+            
+            // Limpar carrinho
+            cart = [];
+            saveCart();
+            
+            // Redirecionar para página de sucesso
+            window.location.href = `success.html?order=${order._id}`;
         } else {
-            showPaymentError(response.status_detail);
-        }
-        
-    } catch (error) {
-        console.error('Payment processing error:', error);
-        showPaymentError('Erro ao processar pagamento');
-    }
-}
-
-async function processAlternativePayment() {
-    const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked');
-    if (!selectedMethod) {
-        showMessage('Selecione uma forma de pagamento', 'error');
-        return;
-    }
-    
-    try {
-        const orderId = `ORDER_${Date.now()}`;
-        await createOrder(orderId, selectedMethod.value);
-        
-        if (selectedMethod.value === 'pix') {
-            showPixPayment(orderId);
-        } else if (selectedMethod.value === 'boleto') {
-            showBoletoPayment(orderId);
-        } else {
-            showTransferPayment(orderId);
-        }
-        
-    } catch (error) {
-        console.error('Payment error:', error);
-        showMessage('Erro ao processar pagamento', 'error');
-    }
-}
-
-async function createOrder(paymentId, paymentMethod) {
-    const orderData = {
-        orderId: paymentId,
-        userId: currentUser.id,
-        items: cart,
-        total: getCartTotal(),
-        paymentMethod: paymentMethod,
-        status: 'pending',
-        shippingAddress: getUserShippingAddress(),
-        createdAt: new Date().toISOString()
-    };
-    
-    const response = await apiRequest('/api/orders', {
-        method: 'POST',
-        body: JSON.stringify(orderData)
-    });
-    
-    return response;
-}
-
-function getUserShippingAddress() {
-    const addressSelect = document.getElementById('deliveryAddress');
-    if (addressSelect && addressSelect.value === 'default' && currentUser.address) {
-        return currentUser.address;
-    }
-    
-    // Get address from form if new address was selected
-    return {
-        zipCode: document.getElementById('newZipCode')?.value || '',
-        street: document.getElementById('newStreet')?.value || '',
-        number: document.getElementById('newNumber')?.value || '',
-        complement: document.getElementById('newComplement')?.value || '',
-        neighborhood: document.getElementById('newNeighborhood')?.value || '',
-        city: document.getElementById('newCity')?.value || '',
-        state: document.getElementById('newState')?.value || ''
-    };
-}
-
-function showPaymentSuccess(paymentId) {
-    clearCart();
-    
-    const successHTML = `
-        <div class="payment-result success">
-            <div class="result-icon">✅</div>
-            <h2>Pagamento Aprovado!</h2>
-            <p>Seu pedido foi confirmado com sucesso.</p>
-            <p><strong>ID do Pagamento:</strong> ${paymentId}</p>
-            <div class="result-actions">
-                <button class="btn btn-primary" onclick="window.location.href='profile.html'">
-                    Ver Meus Pedidos
-                </button>
-                <button class="btn btn-secondary" onclick="window.location.href='index.html'">
-                    Continuar Comprando
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('checkoutContainer').innerHTML = successHTML;
-}
-
-function showPaymentError(error) {
-    const errorHTML = `
-        <div class="payment-result error">
-            <div class="result-icon">❌</div>
-            <h2>Erro no Pagamento</h2>
-            <p>Não foi possível processar seu pagamento.</p>
-            <p><strong>Motivo:</strong> ${error}</p>
-            <div class="result-actions">
-                <button class="btn btn-primary" onclick="location.reload()">
-                    Tentar Novamente
-                </button>
-                <button class="btn btn-secondary" onclick="window.location.href='cart.html'">
-                    Voltar ao Carrinho
-                </button>
-            </div>
-        </div>
-    `;
-    
-    document.getElementById('checkoutContainer').innerHTML = errorHTML;
-}
-
-function showPixPayment(orderId) {
-    const pixHTML = `
-        <div class="payment-result pix">
-            <div class="result-icon">📱</div>
-            <h2>Pagamento via PIX</h2>
-            <p>Use o QR Code abaixo ou copie o código PIX:</p>
-            <div class="pix-code">
-                <div class="qr-code">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PIX_CODE_${orderId}" alt="QR Code PIX">
-                </div>
-                <div class="pix-copy">
-                    <input type="text" value="PIX_CODE_${orderId}" id="pixCode" readonly>
-                    <button onclick="copyPixCode()">Copiar</button>
-                </div>
-            </div>
-            <p><small>O pagamento será confirmado automaticamente em até 2 horas.</small></p>
-        </div>
-    `;
-    
-    document.getElementById('checkoutContainer').innerHTML = pixHTML;
-}
-
-function showBoletoPayment(orderId) {
-    const boletoHTML = `
-        <div class="payment-result boleto">
-            <div class="result-icon">🧾</div>
-            <h2>Boleto Bancário</h2>
-            <p>Seu boleto foi gerado com sucesso!</p>
-            <div class="boleto-actions">
-                <button class="btn btn-primary" onclick="downloadBoleto('${orderId}')">
-                    📄 Baixar Boleto
-                </button>
-                <button class="btn btn-secondary" onclick="emailBoleto('${orderId}')">
-                    📧 Enviar por Email
-                </button>
-            </div>
-            <p><small>Vencimento: 3 dias úteis</small></p>
-        </div>
-    `;
-    
-    document.getElementById('checkoutContainer').innerHTML = boletoHTML;
-}
-
-function showTransferPayment(orderId) {
-    const transferHTML = `
-        <div class="payment-result transfer">
-            <div class="result-icon">🏦</div>
-            <h2>Transferência Bancária</h2>
-            <div class="bank-details">
-                <h3>Dados para Transferência:</h3>
-                <p><strong>Banco:</strong> Banco do Brasil</p>
-                <p><strong>Agência:</strong> 1234-5</p>
-                <p><strong>Conta:</strong> 12345-6</p>
-                <p><strong>CNPJ:</strong> 12.345.678/0001-90</p>
-                <p><strong>Valor:</strong> ${formatCurrency(getCartTotal())}</p>
-                <p><strong>Identificação:</strong> ${orderId}</p>
-            </div>
-            <p><small>Envie o comprovante para: pagamentos@gamingcollectibles.com</small></p>
-        </div>
-    `;
-    
-    document.getElementById('checkoutContainer').innerHTML = transferHTML;
-}
-
-function setupCheckoutEventListeners() {
-    // Address selection
-    const addressSelect = document.getElementById('deliveryAddress');
-    if (addressSelect) {
-        addressSelect.addEventListener('change', function() {
-            const newAddressForm = document.getElementById('newAddressForm');
-            if (this.value === 'new') {
-                newAddressForm.style.display = 'block';
-            } else {
-                newAddressForm.style.display = 'none';
-            }
-        });
-    }
-    
-    // CEP lookup for new address
-    const newZipCode = document.getElementById('newZipCode');
-    if (newZipCode) {
-        newZipCode.addEventListener('blur', function() {
-            const zipCode = this.value.replace(/\D/g, '');
-            if (zipCode.length === 8) {
-                lookupNewAddress(zipCode);
-            }
-        });
-    }
-}
-
-async function lookupNewAddress(zipCode) {
-    try {
-        const response = await fetch(`https://viacep.com.br/ws/${zipCode}/json/`);
-        const data = await response.json();
-        
-        if (!data.erro) {
-            document.getElementById('newStreet').value = data.logradouro || '';
-            document.getElementById('newNeighborhood').value = data.bairro || '';
-            document.getElementById('newCity').value = data.localidade || '';
-            document.getElementById('newState').value = data.uf || '';
+            throw new Error('Erro ao processar pedido');
         }
     } catch (error) {
-        console.error('Error looking up address:', error);
+        console.error('Erro ao processar pedido:', error);
+        alert('Erro ao processar pedido. Entre em contato conosco.');
     }
 }
-
-// Utility functions
-function copyPixCode() {
-    const pixCodeInput = document.getElementById('pixCode');
-    pixCodeInput.select();
-    document.execCommand('copy');
-    showMessage('Código PIX copiado!', 'success');
-}
-
-function downloadBoleto(orderId) {
-    // Simulate boleto download
-    const link = document.createElement('a');
-    link.href = `${CONFIG.API_BASE_URL}/api/payment/boleto/${orderId}`;
-    link.download = `boleto_${orderId}.pdf`;
-    link.click();
-}
-
-function emailBoleto(orderId) {
-    // Send boleto via email
-    apiRequest('/api/payment/boleto/email', {
-        method: 'POST',
-        body: JSON.stringify({ orderId, email: currentUser.email })
-    }).then(() => {
-        showMessage('Boleto enviado para seu email!', 'success');
-    }).catch(() => {
-        showMessage('Erro ao enviar boleto', 'error');
-    });
-}
-
-// Export functions
-window.processAlternativePayment = processAlternativePayment;
-window.copyPixCode = copyPixCode;
-window.downloadBoleto = downloadBoleto;
-window.emailBoleto = emailBoleto;

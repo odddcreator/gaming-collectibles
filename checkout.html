@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - 3D CutLabs</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/checkout.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="assets/logo.png" alt="3D CutLabs" class="logo">
+            </div>
+            <div class="nav-menu">
+                <a href="index.html">Início</a>
+                <a href="action-figures.html">Loja Action Figures</a>
+                <a href="stencils.html">Loja Stencils</a>
+            </div>
+            <div class="nav-actions">
+                <div class="user-menu" id="userMenu">
+                    <span id="userDisplay">User / Cadastro</span>
+                </div>
+                <div class="cart-icon" onclick="openCart()">
+                    🛒 <span id="cartCount">0</span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="checkout-content">
+        <div class="container">
+            <div class="checkout-steps">
+                <div class="step active">
+                    <span class="step-number">1</span>
+                    <span class="step-label">Dados de Entrega</span>
+                </div>
+                <div class="step" id="step2">
+                    <span class="step-number">2</span>
+                    <span class="step-label">Revisão do Pedido</span>
+                </div>
+                <div class="step" id="step3">
+                    <span class="step-number">3</span>
+                    <span class="step-label">Pagamento</span>
+                </div>
+            </div>
+
+            <div class="checkout-container">
+                <!-- Step 1: Shipping Info -->
+                <div class="checkout-step active" id="shippingStep">
+                    <div class="checkout-form">
+                        <h2>Dados de Entrega</h2>
+                        <form id="shippingForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fullName">Nome Completo:</label>
+                                    <input type="text" id="fullName" name="fullName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="phone">Telefone:</label>
+                                    <input type="tel" id="phone" name="phone" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="zipCode">CEP:</label>
+                                    <input type="text" id="zipCode" name="zipCode" required maxlength="9" onblur="searchCEP()">
+                                </div>
+                                <div class="form-group">
+                                    <label for="state">Estado:</label>
+                                    <input type="text" id="state" name="state" required readonly>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="city">Cidade:</label>
+                                    <input type="text" id="city" name="city" required readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="neighborhood">Bairro:</label>
+                                    <input type="text" id="neighborhood" name="neighborhood" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group flex-2">
+                                    <label for="street">Rua:</label>
+                                    <input type="text" id="street" name="street" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="number">Número:</label>
+                                    <input type="text" id="number" name="number" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="complement">Complemento:</label>
+                                <input type="text" id="complement" name="complement">
+                            </div>
+                        </form>
+                        
+                        <div class="shipping-options" id="shippingOptions">
+                            <h3>Opções de Frete</h3>
+                            <div id="shippingMethodsContainer">
+                                <!-- Métodos de frete serão carregados aqui -->
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="nextStep()">Continuar</button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Order Review -->
+                <div class="checkout-step" id="reviewStep">
+                    <div class="order-review">
+                        <h2>Revisão do Pedido</h2>
+                        
+                        <div class="review-section">
+                            <h3>Endereço de Entrega</h3>
+                            <div id="shippingAddressReview"></div>
+                            <button class="btn-link" onclick="editShipping()">Editar</button>
+                        </div>
+                        
+                        <div class="review-section">
+                            <h3>Itens do Pedido</h3>
+                            <div id="orderItemsReview"></div>
+                        </div>
+                        
+                        <div class="review-section">
+                            <h3>Resumo do Pedido</h3>
+                            <div class="order-summary">
+                                <div class="summary-line">
+                                    <span>Subtotal:</span>
+                                    <span id="reviewSubtotal">R$ 0,00</span>
+                                </div>
+                                <div class="summary-line">
+                                    <span>Frete:</span>
+                                    <span id="reviewShipping">R$ 0,00</span>
+                                </div>
+                                <div class="summary-line total">
+                                    <span>Total:</span>
+                                    <span id="reviewTotal">R$ 0,00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="step-actions">
+                            <button class="btn btn-secondary" onclick="previousStep()">Voltar</button>
+                            <button class="btn btn-primary" onclick="nextStep()">Ir para Pagamento</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Payment -->
+                <div class="checkout-step" id="paymentStep">
+                    <div class="payment-section">
+                        <h2>Pagamento</h2>
+                        
+                        <div class="payment-summary">
+                            <h3>Total a Pagar: R$ <span id="finalTotal">0,00</span></h3>
+                        </div>
+                        
+                        <div id="mercadopagoContainer">
+                            <!-- Mercado Pago checkout será inserido aqui -->
+                        </div>
+                        
+                        <div class="step-actions">
+                            <button class="btn btn-secondary" onclick="previousStep()">Voltar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Summary Sidebar -->
+                <div class="order-sidebar">
+                    <h3>Resumo do Pedido</h3>
+                    <div id="sidebarItems"></div>
+                    <div class="sidebar-totals">
+                        <div class="total-line">
+                            <span>Subtotal:</span>
+                            <span id="sidebarSubtotal">R$ 0,00</span>
+                        </div>
+                        <div class="total-line">
+                            <span>Frete:</span>
+                            <span id="sidebarShipping">R$ 0,00</span>
+                        </div>
+                        <div class="total-line final">
+                            <span>Total:</span>
+                            <span id="sidebarTotal">R$ 0,00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/checkout.js"></script>
+</body>
+</html>

@@ -3,375 +3,93 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produto - Gaming Collectibles</title>
+    <title>Produto - 3D CutLabs</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/product.css">
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
-        <div class="container">
+        <nav class="navbar">
             <div class="nav-brand">
-                <img src="images/logo.png" alt="Logo" class="logo">
-                <span>LOGO.png</span>
+                <img src="assets/logo.png" alt="3D CutLabs" class="logo">
             </div>
-            <nav class="nav-menu">
+            <div class="nav-menu">
                 <a href="index.html">Início</a>
-                <span class="separator">|</span>
                 <a href="action-figures.html">Loja Action Figures</a>
-                <span class="separator">|</span>
                 <a href="stencils.html">Loja Stencils</a>
-            </nav>
+            </div>
             <div class="nav-actions">
-                <div class="user-menu">
-                    <span class="user-icon">👤</span>
+                <div class="user-menu" id="userMenu">
                     <span id="userDisplay">User / Cadastro</span>
-                    <div class="user-dropdown">
-                        <a href="login.html" id="loginLink">Login</a>
-                        <a href="profile.html" id="profileLink" style="display:none;">Perfil</a>
-                        <a href="#" id="logoutLink" style="display:none;">Logout</a>
-                    </div>
                 </div>
-                <div class="cart-icon" onclick="window.location.href='cart.html'">
-                    <span>🛒</span>
-                    <span class="cart-count" id="cartCount">0</span>
+                <div class="cart-icon" onclick="openCart()">
+                    🛒 <span id="cartCount">0</span>
                 </div>
             </div>
-        </div>
+        </nav>
     </header>
 
-    <!-- Product Detail -->
-    <section class="shop-content">
+    <main class="product-content">
         <div class="container">
-            <div class="product-detail" id="productDetail">
-                <div class="product-gallery">
-                    <div class="main-image" id="mainImage">
-                        FOTO 1
-                    </div>
-                    <div class="thumbnail-list" id="thumbnailList">
-                        <div class="thumbnail active">FOTO 1</div>
-                        <div class="thumbnail">FOTO 2</div>
-                        <div class="thumbnail">FOTO 3</div>
-                        <div class="thumbnail">FOTO 4</div>
-                        <div class="thumbnail">FOTO 5</div>
-                    </div>
+            <div class="product-details" id="productDetails">
+                <!-- Produto será carregado dinamicamente -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>ATENDIMENTO AO CLIENTE</h3>
+                <ul>
+                    <li><a href="#">Como Comprar</a></li>
+                    <li><a href="#">Métodos de Pagamento</a></li>
+                    <li><a href="#">Garantia</a></li>
+                    <li><a href="#">Devolução e Reembolso</a></li>
+                    <li><a href="#">Fale Conosco</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>PAGAMENTO</h3>
+                <div class="payment-icons">
+                    <img src="assets/payment-icons/visa.png" alt="Visa">
+                    <img src="assets/payment-icons/mastercard.png" alt="Mastercard">
+                    <img src="assets/payment-icons/hipercard.png" alt="Hipercard">
+                    <img src="assets/payment-icons/elo.png" alt="Elo">
+                    <img src="assets/payment-icons/amex.png" alt="American Express">
+                    <img src="assets/payment-icons/boleto.png" alt="Boleto">
+                    <img src="assets/payment-icons/pix.png" alt="PIX">
                 </div>
-                
-                <div class="product-info-detail">
-                    <h1 class="product-title-detail" id="productTitle">NOME DO PRODUTO</h1>
-                    
-                    <div class="rating">
-                        <div class="stars">⭐⭐⭐⭐⭐</div>
-                        <span>5.0</span>
-                    </div>
-                    
-                    <div class="price-detail" id="productPrice">R$ 499,99</div>
-                    
-                    <div class="options">
-                        <div class="option-group">
-                            <label>Tamanho:</label>
-                            <div class="size-options">
-                                <button class="option-btn active" data-size="small" data-multiplier="1">18 cm (1:10)</button>
-                                <button class="option-btn" data-size="medium" data-multiplier="1.25">22 cm (1:8)</button>
-                                <button class="option-btn" data-size="large" data-multiplier="1.5">26 cm (1:7)</button>
-                            </div>
-                        </div>
-                        
-                        <div class="option-group">
-                            <label>Pintura:</label>
-                            <div class="paint-options">
-                                <button class="option-btn active" data-paint="with" data-multiplier="1.75">com pintura</button>
-                                <button class="option-btn" data-paint="without" data-multiplier="1">sem pintura</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="quantity-section">
-                        <label>Quantidade</label>
-                        <div class="quantity-controls">
-                            <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
-                            <input type="number" class="quantity-input" id="quantity" value="1" min="1">
-                            <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
-                        </div>
-                        <span id="stockInfo">4 peças disponíveis</span>
-                    </div>
-                    
-                    <div class="shipping-calculator">
-                        <label>Simulação de frete</label>
-                        <div class="shipping-input">
-                            <input type="text" id="zipCode" placeholder="Informe seu cep" maxlength="9">
-                            <button class="btn btn-primary" onclick="calculateShipping()">Calcular</button>
-                        </div>
-                        <div id="shippingResult" class="mt-20"></div>
-                    </div>
-                    
-                    <div class="action-buttons">
-                        <button class="btn-add-cart" onclick="addToCart()">🛒 Adicionar Ao Carrinho</button>
-                        <button class="btn-buy-now" onclick="buyNow()">Comprar Agora</button>
-                    </div>
-                    
-                    <div class="product-description">
-                        <h3>Description</h3>
-                        <div id="productDescription">
-                            <p>Description</p>
-                        </div>
-                    </div>
+            </div>
+            <div class="footer-section">
+                <h3>SIGA-NOS</h3>
+                <div class="social-links">
+                    <a href="#" target="_blank">Instagram</a>
+                    <a href="#" target="_blank">TikTok</a>
+                    <a href="#" target="_blank">WhatsApp</a>
                 </div>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>ATENDIMENTO AO CLIENTE</h3>
-                    <ul>
-                        <li><a href="#">Como Comprar</a></li>
-                        <li><a href="#">Métodos de Pagamento</a></li>
-                        <li><a href="#">Garantia</a></li>
-                        <li><a href="#">Devolução e Reembolso</a></li>
-                        <li><a href="#">Fale Conosco</a></li>
-                    </ul>
-                </div>
-                <div class="footer-section">
-                    <h3>PAGAMENTO</h3>
-                    <div class="payment-icons">
-                        <img src="https://via.placeholder.com/50x30?text=VISA" alt="Visa">
-                        <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard">
-                        <img src="https://via.placeholder.com/50x30?text=ELO" alt="Elo">
-                        <img src="https://via.placeholder.com/50x30?text=AMEX" alt="American Express">
-                        <img src="https://via.placeholder.com/50x30?text=PIX" alt="PIX">
-                    </div>
-                </div>
-                <div class="footer-section">
-                    <h3>SIGA-NOS</h3>
-                    <div class="social-links">
-                        <a href="#">📷 Instagram</a>
-                        <a href="#">🎵 TikTok</a>
-                        <a href="#">📱 WhatsApp</a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>© 2025. Todos os direitos reservados</p>
-            </div>
+        <div class="footer-bottom">
+            <p>© 2025. Todos os direitos reservados</p>
         </div>
     </footer>
 
-    <script src="js/main.js"></script>
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2>Carrinho de Compras</h2>
+            <div id="cartItems"></div>
+            <div class="cart-total">
+                <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+            </div>
+            <button class="btn btn-primary" onclick="proceedToCheckout()">Finalizar Compra</button>
+        </div>
+    </div>
+
     <script src="js/auth.js"></script>
-    <script>
-        let currentProduct = null;
-        let basePrice = 0;
-        let sizeMultiplier = 1;
-        let paintMultiplier = 1;
-    
-        document.addEventListener('DOMContentLoaded', function() {
-            loadProductDetail();
-            setupProductOptions();
-            setupThumbnails();
-        });
-    
-        async function loadProductDetail() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const productId = urlParams.get('id');
-            
-            if (productId) {
-                try {
-                    const response = await fetch(`${CONFIG.API_BASE_URL}/api/products/${productId}`);
-                    if (response.ok) {
-                        const product = await response.json();
-                        displayProductDetail(product);
-                    } else {
-                        throw new Error('Product not found');
-                    }
-                } catch (error) {
-                    console.error('Error loading product:', error);
-                    displayProductNotFound();
-                }
-            } else {
-                displayProductNotFound();
-            }
-        }
-    
-        function displayProductDetail(product) {
-            currentProduct = product;
-            basePrice = product.basePrice;
-            
-            // Update product title
-            document.getElementById('productTitle').textContent = product.name;
-            
-            // Update product images
-            const mainImage = document.getElementById('mainImage');
-            const thumbnailList = document.getElementById('thumbnailList');
-            
-            if (product.images && product.images.length > 0) {
-                mainImage.innerHTML = `<img src="${product.images[0]}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
-                
-                thumbnailList.innerHTML = product.images.map((image, index) => `
-                    <div class="thumbnail ${index === 0 ? 'active' : ''}" data-image="${image}">
-                        <img src="${image}" alt="Foto ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                `).join('');
-            } else {
-                mainImage.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #666;">Sem imagem</div>`;
-                thumbnailList.innerHTML = '<div class="thumbnail active">Sem imagem</div>';
-            }
-            
-            // Update description
-            document.getElementById('productDescription').innerHTML = `<p>${product.description || 'Descrição não disponível'}</p>`;
-            
-            // Update stock info
-            document.getElementById('stockInfo').textContent = `${product.stock || 0} peças disponíveis`;
-            
-            // Setup size options based on product type
-            const sizeOptions = document.querySelector('.size-options');
-            if (product.type === 'action-figure') {
-                sizeOptions.innerHTML = `
-                    <button class="option-btn active" data-size="small" data-multiplier="1">18 cm (1:10)</button>
-                    <button class="option-btn" data-size="medium" data-multiplier="1.25">22 cm (1:8)</button>
-                    <button class="option-btn" data-size="large" data-multiplier="1.5">26 cm (1:7)</button>
-                `;
-                
-                // Show paint options for action figures
-                document.querySelector('.paint-options').style.display = 'flex';
-            } else {
-                // For stencils, only show size option
-                sizeOptions.innerHTML = `
-                    <button class="option-btn active" data-size="standard" data-multiplier="1">Tamanho Padrão</button>
-                `;
-                
-                // Hide paint options for stencils
-                document.querySelector('.paint-options').parentElement.style.display = 'none';
-            }
-            
-            // Update initial price
-            updatePrice();
-            
-            // Setup thumbnails click events
-            setupThumbnails();
-            setupProductOptions();
-        }
-    
-        function displayProductNotFound() {
-            document.querySelector('.product-detail').innerHTML = `
-                <div class="product-not-found" style="text-align: center; padding: 60px 20px;">
-                    <h2>Produto não encontrado</h2>
-                    <p>O produto que você está procurando não existe ou foi removido.</p>
-                    <div style="margin-top: 30px;">
-                        <a href="action-figures.html" class="btn btn-primary">Ver Action Figures</a>
-                        <a href="stencils.html" class="btn btn-secondary">Ver Stencils</a>
-                    </div>
-                </div>
-            `;
-        }
-    
-        function setupProductOptions() {
-            // Size options
-            document.querySelectorAll('.size-options .option-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.size-options .option-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    sizeMultiplier = parseFloat(this.dataset.multiplier);
-                    updatePrice();
-                });
-            });
-    
-            // Paint options
-            document.querySelectorAll('.paint-options .option-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.paint-options .option-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    paintMultiplier = parseFloat(this.dataset.multiplier);
-                    updatePrice();
-                });
-            });
-        }
-    
-        function setupThumbnails() {
-            document.querySelectorAll('.thumbnail').forEach(thumb => {
-                thumb.addEventListener('click', function() {
-                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    const imageUrl = this.dataset.image;
-                    if (imageUrl) {
-                        document.getElementById('mainImage').innerHTML = `<img src="${imageUrl}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover;">`;
-                    }
-                });
-            });
-        }
-    
-        function updatePrice() {
-            const finalPrice = basePrice * sizeMultiplier * paintMultiplier;
-            document.getElementById('productPrice').textContent = formatCurrency(finalPrice);
-        }
-    
-        function changeQuantity(delta) {
-            const input = document.getElementById('quantity');
-            const newValue = parseInt(input.value) + delta;
-            const maxStock = currentProduct ? currentProduct.stock : 99;
-            
-            if (newValue >= 1 && newValue <= maxStock) {
-                input.value = newValue;
-            }
-        }
-    
-        function calculateShipping() {
-            const zipCode = document.getElementById('zipCode').value;
-            if (!validateZipCode(zipCode)) {
-                alert('Por favor, informe um CEP válido');
-                return;
-            }
-            
-            calculateShippingCost(zipCode);
-        }
-    
-        function addToCart() {
-            if (!currentProduct) {
-                alert('Produto não encontrado');
-                return;
-            }
-            
-            if (currentProduct.stock <= 0) {
-                alert('Produto fora de estoque');
-                return;
-            }
-            
-            const quantity = parseInt(document.getElementById('quantity').value);
-            if (quantity > currentProduct.stock) {
-                alert(`Apenas ${currentProduct.stock} unidades disponíveis`);
-                return;
-            }
-            
-            const selectedSize = document.querySelector('.size-options .option-btn.active');
-            const selectedPaint = document.querySelector('.paint-options .option-btn.active');
-            
-            const product = {
-                id: currentProduct._id || currentProduct.id,
-                name: currentProduct.name,
-                price: basePrice * sizeMultiplier * paintMultiplier,
-                quantity: quantity,
-                size: selectedSize ? selectedSize.textContent : 'Padrão',
-                paint: selectedPaint ? selectedPaint.textContent : 'Sem pintura',
-                image: currentProduct.images && currentProduct.images[0] ? currentProduct.images[0] : 'https://via.placeholder.com/100x100'
-            };
-            
-            addItemToCart(product);
-            alert('Produto adicionado ao carrinho!');
-        }
-    
-        function buyNow() {
-            addToCart();
-            window.location.href = 'cart.html';
-        }
-    
-        // Make functions global
-        window.changeQuantity = changeQuantity;
-        window.calculateShipping = calculateShipping;
-        window.addToCart = addToCart;
-        window.buyNow = buyNow;
-    </script>
+    <script src="js/cart.js"></script>
+    <script src="js/product.js"></script>
 </body>
 </html>
