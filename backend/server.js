@@ -160,30 +160,48 @@ app.get('/api/products/:id', async (req, res) => {
     }
 });
 
-// Shipping calculation (mock)
+// Shipping calculation
 app.post('/api/shipping', async (req, res) => {
     try {
         const { zipCode, items } = req.body;
         
-        // Mock shipping calculation
-        const options = [
-            {
-                code: 'pac',
-                name: 'PAC',
-                price: 15.90,
-                deliveryTime: '7-10 dias úteis'
-            },
-            {
-                code: 'sedex',
-                name: 'SEDEX',
-                price: 25.90,
-                deliveryTime: '3-5 dias úteis'
-            }
-        ];
+        // Calcular peso total baseado nos items
+        const totalWeight = items.reduce((sum, item) => {
+            const weight = item.type === 'action-figure' ? 0.5 : 0.1; // kg
+            return sum + (weight * item.quantity);
+        }, 0);
         
-        res.json({ options });
+        // Chamar API do Melhor Envio
+        const shippingData = {
+            from: { postal_code: "01310-100" }, // CEP da sua loja
+            to: { postal_code: zipCode },
+            package: {
+                height: 10,
+                width: 15,
+                length: 20,
+                weight: totalWeight
+            }
+        };
+        
+        const response = await axios.post(
+            'https://melhorenvio.com.br/api/v2/me/shipment/calculate',
+            shippingData,
+            {
+                headers: {
+                    'Authorization': `Bearer ${process.env.MELHOR_ENVIO_TOKEN}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        
+        res.json({ options: response.data });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        // Fallback para valores fixos
+        const options = [
+            { code: 'pac', name: 'PAC', price: 15.90, deliveryTime: '7-10 dias úteis' },
+            { code: 'sedex', name: 'SEDEX', price: 25.90, deliveryTime: '3-5 dias úteis' }
+        ];
+        res.json({ options });
     }
 });
 
