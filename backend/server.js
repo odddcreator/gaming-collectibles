@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 // MongoDB connection
-mongoose.connect(process.env.MONGODB_URI || 'YOUR_MONGODB_CONNECTION_STRING', {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 });
@@ -46,7 +46,7 @@ const authenticateToken = (req, res, next) => {
         return res.sendStatus(401);
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'CfI9OKyMb7SKrh7T35f0N', (err, user) => {
         if (err) return res.sendStatus(403);
         req.user = user;
         next();
@@ -80,7 +80,7 @@ app.post('/api/auth/login', async (req, res) => {
         
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'your-secret-key',
+            process.env.JWT_SECRET || 'CfI9OKyMb7SKrh7T35f0N',
             { expiresIn: '24h' }
         );
         
@@ -119,7 +119,7 @@ app.post('/api/auth/register', async (req, res) => {
         
         const token = jwt.sign(
             { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'your-secret-key',
+            process.env.JWT_SECRET || 'CfI9OKyMb7SKrh7T35f0N',
             { expiresIn: '24h' }
         );
         
