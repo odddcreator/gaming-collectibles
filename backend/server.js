@@ -23,8 +23,8 @@ mongoose.connect(process.env.MONGODB_URI || 'YOUR_MONGODB_CONNECTION_STRING', {
 
 // Models
 const User = require('./models/User');
-const Product = require('./models/Product');
-const Order = require('./models/Order');
+const Product = require('./models/product');
+const Order = require('./models/order');
 
 // File upload configuration
 const storage = multer.diskStorage({
