@@ -35,22 +35,23 @@
     <div class="auth-container">
         <h2 class="text-center mb-20">Login / Cadastro</h2>
         
-        <!-- Google Login -->
-        <div class="google-login text-center mb-20">
-            <div id="g_id_onload"
-                 data-client_id="901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
-            </div>
+    <!-- Google Login -->
+    <div class="google-login text-center mb-20">
+        <div id="g_id_onload"
+            data-client_id="901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="handleCredentialResponse"
+            data-auto_prompt="false">
         </div>
+        <div class="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="outline"
+            data-text="signin_with"
+            data-size="large">
+        </div>
+    </div>
         
         <div class="divider text-center mb-20">
             <span>ou</span>

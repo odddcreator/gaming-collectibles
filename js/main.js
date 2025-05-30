@@ -1,6 +1,6 @@
 // Configuration
 const CONFIG = {
-    API_BASE_URL: 'dicksoutforharambe', // Replace with your Render backend URL
+    API_BASE_URL: 'https://gaming-collectibles-api.onrender.com', // Replace with your Render backend URL
     MERCADOPAGO_PUBLIC_KEY: 'APP_USR-5ec7f48e-be4d-4a1f-8a41-cb4fa93d0e8f',
     GOOGLE_CLIENT_ID: '901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com',
     MONGODB_URI: 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
@@ -276,7 +276,7 @@ function displayProductDetail(product) {
 // Shipping calculation
 async function calculateShippingCost(zipCode) {
     try {
-        const response = await fetch(`${CONFIG.API_BASE_URL}/api/shipping`, {
+        const response = await apiRequest('api/shipping', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -287,10 +287,7 @@ async function calculateShippingCost(zipCode) {
             })
         });
         
-        if (!response.ok) throw new Error('Failed to calculate shipping');
-        
-        const shippingData = await response.json();
-        displayShippingOptions(shippingData);
+        displayShippingOptions(response);
     } catch (error) {
         console.error('Error calculating shipping:', error);
         displayMockShippingOptions();
@@ -303,15 +300,22 @@ function displayMockShippingOptions() {
         shippingResult.innerHTML = `
             <div class="shipping-options">
                 <div class="shipping-option">
-                    <input type="radio" name="shipping" value="pac" id="pac">
+                    <input type="radio" name="shipping" value="pac" id="pac" data-price="15.90">
                     <label for="pac">PAC - R$ 15,90 (7-10 dias úteis)</label>
                 </div>
                 <div class="shipping-option">
-                    <input type="radio" name="shipping" value="sedex" id="sedex">
+                    <input type="radio" name="shipping" value="sedex" id="sedex" data-price="25.90">
                     <label for="sedex">SEDEX - R$ 25,90 (3-5 dias úteis)</label>
                 </div>
             </div>
         `;
+        
+        // Adicionar event listeners para os radio buttons
+        document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                updateShippingCost();
+            });
+        });
     }
 }
 
@@ -381,7 +385,10 @@ function sortProducts(sortBy) {
 
 // API helper functions
 async function apiRequest(endpoint, options = {}) {
-    const url = `${CONFIG.API_BASE_URL}${endpoint}`;
+    // Remove a barra inicial do endpoint se existir para evitar duplicação
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const url = `${CONFIG.API_BASE_URL}/${cleanEndpoint}`;
+    
     const config = {
         headers: {
             'Content-Type': 'application/json',

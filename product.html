@@ -163,26 +163,110 @@
     <script src="js/auth.js"></script>
     <script>
         let currentProduct = null;
-        let basePrice = 499.99;
+        let basePrice = 0;
         let sizeMultiplier = 1;
         let paintMultiplier = 1;
-
+    
         document.addEventListener('DOMContentLoaded', function() {
             loadProductDetail();
             setupProductOptions();
             setupThumbnails();
         });
-
-        function loadProductDetail() {
+    
+        async function loadProductDetail() {
             const urlParams = new URLSearchParams(window.location.search);
             const productId = urlParams.get('id');
             
             if (productId) {
-                // Load product from API
-                fetchProduct(productId);
+                try {
+                    const response = await fetch(`${CONFIG.API_BASE_URL}/api/products/${productId}`);
+                    if (response.ok) {
+                        const product = await response.json();
+                        displayProductDetail(product);
+                    } else {
+                        throw new Error('Product not found');
+                    }
+                } catch (error) {
+                    console.error('Error loading product:', error);
+                    displayProductNotFound();
+                }
+            } else {
+                displayProductNotFound();
             }
         }
-
+    
+        function displayProductDetail(product) {
+            currentProduct = product;
+            basePrice = product.basePrice;
+            
+            // Update product title
+            document.getElementById('productTitle').textContent = product.name;
+            
+            // Update product images
+            const mainImage = document.getElementById('mainImage');
+            const thumbnailList = document.getElementById('thumbnailList');
+            
+            if (product.images && product.images.length > 0) {
+                mainImage.innerHTML = `<img src="${product.images[0]}" alt="${product.name}" style="width: 100%; height: 100%; object-fit: cover;">`;
+                
+                thumbnailList.innerHTML = product.images.map((image, index) => `
+                    <div class="thumbnail ${index === 0 ? 'active' : ''}" data-image="${image}">
+                        <img src="${image}" alt="Foto ${index + 1}" style="width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                `).join('');
+            } else {
+                mainImage.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f0f0f0; color: #666;">Sem imagem</div>`;
+                thumbnailList.innerHTML = '<div class="thumbnail active">Sem imagem</div>';
+            }
+            
+            // Update description
+            document.getElementById('productDescription').innerHTML = `<p>${product.description || 'Descrição não disponível'}</p>`;
+            
+            // Update stock info
+            document.getElementById('stockInfo').textContent = `${product.stock || 0} peças disponíveis`;
+            
+            // Setup size options based on product type
+            const sizeOptions = document.querySelector('.size-options');
+            if (product.type === 'action-figure') {
+                sizeOptions.innerHTML = `
+                    <button class="option-btn active" data-size="small" data-multiplier="1">18 cm (1:10)</button>
+                    <button class="option-btn" data-size="medium" data-multiplier="1.25">22 cm (1:8)</button>
+                    <button class="option-btn" data-size="large" data-multiplier="1.5">26 cm (1:7)</button>
+                `;
+                
+                // Show paint options for action figures
+                document.querySelector('.paint-options').style.display = 'flex';
+            } else {
+                // For stencils, only show size option
+                sizeOptions.innerHTML = `
+                    <button class="option-btn active" data-size="standard" data-multiplier="1">Tamanho Padrão</button>
+                `;
+                
+                // Hide paint options for stencils
+                document.querySelector('.paint-options').parentElement.style.display = 'none';
+            }
+            
+            // Update initial price
+            updatePrice();
+            
+            // Setup thumbnails click events
+            setupThumbnails();
+            setupProductOptions();
+        }
+    
+        function displayProductNotFound() {
+            document.querySelector('.product-detail').innerHTML = `
+                <div class="product-not-found" style="text-align: center; padding: 60px 20px;">
+                    <h2>Produto não encontrado</h2>
+                    <p>O produto que você está procurando não existe ou foi removido.</p>
+                    <div style="margin-top: 30px;">
+                        <a href="action-figures.html" class="btn btn-primary">Ver Action Figures</a>
+                        <a href="stencils.html" class="btn btn-secondary">Ver Stencils</a>
+                    </div>
+                </div>
+            `;
+        }
+    
         function setupProductOptions() {
             // Size options
             document.querySelectorAll('.size-options .option-btn').forEach(btn => {
@@ -193,7 +277,7 @@
                     updatePrice();
                 });
             });
-
+    
             // Paint options
             document.querySelectorAll('.paint-options .option-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -204,59 +288,90 @@
                 });
             });
         }
-
+    
         function setupThumbnails() {
-            document.querySelectorAll('.thumbnail').forEach((thumb, index) => {
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
                 thumb.addEventListener('click', function() {
                     document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    document.getElementById('mainImage').textContent = this.textContent;
+                    
+                    const imageUrl = this.dataset.image;
+                    if (imageUrl) {
+                        document.getElementById('mainImage').innerHTML = `<img src="${imageUrl}" alt="Produto" style="width: 100%; height: 100%; object-fit: cover;">`;
+                    }
                 });
             });
         }
-
+    
         function updatePrice() {
             const finalPrice = basePrice * sizeMultiplier * paintMultiplier;
-            document.getElementById('productPrice').textContent = `R$ ${finalPrice.toFixed(2).replace('.', ',')}`;
+            document.getElementById('productPrice').textContent = formatCurrency(finalPrice);
         }
-
+    
         function changeQuantity(delta) {
             const input = document.getElementById('quantity');
             const newValue = parseInt(input.value) + delta;
-            if (newValue >= 1) {
+            const maxStock = currentProduct ? currentProduct.stock : 99;
+            
+            if (newValue >= 1 && newValue <= maxStock) {
                 input.value = newValue;
             }
         }
-
+    
         function calculateShipping() {
             const zipCode = document.getElementById('zipCode').value;
-            if (zipCode.length >= 8) {
-                // Call shipping API
-                calculateShippingCost(zipCode);
-            } else {
+            if (!validateZipCode(zipCode)) {
                 alert('Por favor, informe um CEP válido');
+                return;
             }
+            
+            calculateShippingCost(zipCode);
         }
-
+    
         function addToCart() {
+            if (!currentProduct) {
+                alert('Produto não encontrado');
+                return;
+            }
+            
+            if (currentProduct.stock <= 0) {
+                alert('Produto fora de estoque');
+                return;
+            }
+            
+            const quantity = parseInt(document.getElementById('quantity').value);
+            if (quantity > currentProduct.stock) {
+                alert(`Apenas ${currentProduct.stock} unidades disponíveis`);
+                return;
+            }
+            
+            const selectedSize = document.querySelector('.size-options .option-btn.active');
+            const selectedPaint = document.querySelector('.paint-options .option-btn.active');
+            
             const product = {
-                id: currentProduct?.id || 'sample-1',
-                name: document.getElementById('productTitle').textContent,
+                id: currentProduct._id || currentProduct.id,
+                name: currentProduct.name,
                 price: basePrice * sizeMultiplier * paintMultiplier,
-                quantity: parseInt(document.getElementById('quantity').value),
-                size: document.querySelector('.size-options .option-btn.active').textContent,
-                paint: document.querySelector('.paint-options .option-btn.active').textContent,
-                image: 'placeholder.jpg'
+                quantity: quantity,
+                size: selectedSize ? selectedSize.textContent : 'Padrão',
+                paint: selectedPaint ? selectedPaint.textContent : 'Sem pintura',
+                image: currentProduct.images && currentProduct.images[0] ? currentProduct.images[0] : 'https://via.placeholder.com/100x100'
             };
             
             addItemToCart(product);
             alert('Produto adicionado ao carrinho!');
         }
-
+    
         function buyNow() {
             addToCart();
             window.location.href = 'cart.html';
         }
+    
+        // Make functions global
+        window.changeQuantity = changeQuantity;
+        window.calculateShipping = calculateShipping;
+        window.addToCart = addToCart;
+        window.buyNow = buyNow;
     </script>
 </body>
 </html>

@@ -1,13 +1,45 @@
 // Authentication management
 let googleAuth = null;
 
-// Initialize Google Sign-In
+// Substituir a função initializeGoogleAuth:
 function initializeGoogleAuth() {
-    if (typeof google !== 'undefined' && google.accounts) {
+    // Verificar se o Google Identity Services está disponível
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
         google.accounts.id.initialize({
             client_id: CONFIG.GOOGLE_CLIENT_ID,
-            callback: handleCredentialResponse
+            callback: handleCredentialResponse,
+            context: 'signin',
+            ux_mode: 'popup',
+            auto_prompt: false
         });
+        
+        // Renderizar o botão se o container existir
+        const buttonContainer = document.querySelector('.g_id_signin');
+        if (buttonContainer) {
+            google.accounts.id.renderButton(buttonContainer, {
+                type: 'standard',
+                shape: 'rectangular',
+                theme: 'outline',
+                text: 'signin_with',
+                size: 'large'
+            });
+        }
+    } else {
+        console.warn('Google Identity Services não carregado');
+        // Mostrar formulário de login alternativo
+        showAlternativeLogin();
+    }
+}
+
+function showAlternativeLogin() {
+    const googleLoginDiv = document.querySelector('.google-login');
+    if (googleLoginDiv) {
+        googleLoginDiv.innerHTML = `
+            <p style="color: #666; font-size: 14px;">
+                Login com Google temporariamente indisponível.<br>
+                Use o formulário abaixo para entrar.
+            </p>
+        `;
     }
 }
 
