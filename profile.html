@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - Gaming Collectibles</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="Logo" class="logo">
+                <span>LOGO.png</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html">Início</a>
+                <span class="separator">|</span>
+                <a href="action-figures.html">Loja Action Figures</a>
+                <span class="separator">|</span>
+                <a href="stencils.html">Loja Stencils</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="user-menu">
+                    <span class="user-icon">👤</span>
+                    <span id="userDisplay">User / Cadastro</span>
+                    <div class="user-dropdown">
+                        <a href="profile.html" id="profileLink">Perfil</a>
+                        <a href="#" id="logoutLink">Logout</a>
+                    </div>
+                </div>
+                <div class="cart-icon" onclick="window.location.href='cart.html'">
+                    <span>🛒</span>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Profile Content -->
+    <section class="cart-container">
+        <div class="container">
+            <h1>Meu Perfil</h1>
+            
+            <div class="profile-sections">
+                <div class="profile-nav">
+                    <button class="profile-nav-btn active" onclick="showSection('personal')">Dados Pessoais</button>
+                    <button class="profile-nav-btn" onclick="showSection('address')">Endereços</button>
+                    <button class="profile-nav-btn" onclick="showSection('orders')">Meus Pedidos</button>
+                </div>
+                
+                <!-- Personal Data Section -->
+                <div class="profile-section" id="personalSection">
+                    <h2>Dados Pessoais</h2>
+                    <form class="auth-form" id="profileForm">
+                        <div class="form-group">
+                            <label for="profileFullName">Nome Completo:</label>
+                            <input type="text" id="profileFullName" name="fullName">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileEmail">E-mail:</label>
+                            <input type="email" id="profileEmail" name="email" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profilePhone">Telefone:</label>
+                            <input type="tel" id="profilePhone" name="phone">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileCpf">CPF:</label>
+                            <input type="text" id="profileCpf" name="cpf">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="profileBirthDate">Data de Nascimento:</label>
+                            <input type="date" id="profileBirthDate" name="birthDate">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </form>
+                </div>
+                
+                <!-- Address Section -->
+                <div class="profile-section hidden" id="addressSection">
+                    <h2>Endereços</h2>
+                    <div id="addressList">
+                        <!-- Addresses will be loaded here -->
+                    </div>
+                    <button class="btn btn-secondary" onclick="addNewAddress()">Adicionar Novo Endereço</button>
+                </div>
+                
+                <!-- Orders Section -->
+                <div class="profile-section hidden" id="ordersSection">
+                    <h2>Meus Pedidos</h2>
+                    <div id="ordersList">
+                        <!-- Orders will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ATENDIMENTO AO CLIENTE</h3>
+                    <ul>
+                        <li><a href="#">Como Comprar</a></li>
+                        <li><a href="#">Métodos de Pagamento</a></li>
+                        <li><a href="#">Garantia</a></li>
+                        <li><a href="#">Devolução e Reembolso</a></li>
+                        <li><a href="#">Fale Conosco</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>PAGAMENTO</h3>
+                    <div class="payment-icons">
+                        <img src="https://via.placeholder.com/50x30?text=VISA" alt="Visa">
+                        <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard">
+                        <img src="https://via.placeholder.com/50x30?text=ELO" alt="Elo">
+                        <img src="https://via.placeholder.com/50x30?text=AMEX" alt="American Express">
+                        <img src="https://via.placeholder.com/50x30?text=PIX" alt="PIX">
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>SIGA-NOS</h3>
+                    <div class="social-links">
+                        <a href="#">📷 Instagram</a>
+                        <a href="#">🎵 TikTok</a>
+                        <a href="#">📱 WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025. Todos os direitos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            loadUserProfile();
+        });
+
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.profile-section').forEach(sec => sec.classList.add('hidden'));
+            document.querySelectorAll('.profile-nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.remove('hidden');
+            event.target.classList.add('active');
+            
+            // Load section-specific data
+            if (section === 'address') loadAddresses();
+            if (section === 'orders') loadOrders();
+        }
+
+        function loadUserProfile() {
+            const user = getCurrentUser();
+            if (user) {
+                document.getElementById('profileFullName').value = user.fullName || '';
+                document.getElementById('profileEmail').value = user.email || '';
+                document.getElementById('profilePhone').value = user.phone || '';
+                document.getElementById('profileCpf').value = user.cpf || '';
+                document.getElementById('profileBirthDate').value = user.birthDate || '';
+            }
+        }
+
+        function loadAddresses() {
+            // Load user addresses from API
+            const addressList = document.getElementById('addressList');
+            addressList.innerHTML = '<div class="loading">Carregando endereços...</div>';
+            
+            // Simulate API call
+            setTimeout(() => {
+                addressList.innerHTML = `
+                    <div class="address-card">
+                        <h4>Endereço Principal</h4>
+                        <p>Rua das Flores, 123 - Apto 45</p>
+                        <p>Centro - São Paulo/SP</p>
+                        <p>CEP: 01234-567</p>
+                        <div class="address-actions">
+                            <button class="btn btn-secondary">Editar</button>
+                            <button class="btn btn-danger">Excluir</button>
+                        </div>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function loadOrders() {
+            // Load user orders from API
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = '<div class="loading">Carregando pedidos...</div>';
+            
+            // Simulate API call
+            setTimeout(() => {
+                ordersList.innerHTML = `
+                    <div class="order-card">
+                        <h4>Pedido #12345</h4>
+                        <p>Data: 15/01/2025</p>
+                        <p>Status: Em processamento</p>
+                        <p>Total: R$ 299,99</p>
+                        <button class="btn btn-primary">Ver Detalhes</button>
+                    </div>
+                `;
+            }, 1000);
+        }
+
+        function addNewAddress() {
+            // Open address form modal or redirect to address form
+            alert('Funcionalidade de adicionar endereço em desenvolvimento');
+        }
+
+        // Profile form submission
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const userData = Object.fromEntries(formData);
+            
+            // Update user profile via API
+            updateUserProfile(userData).then(() => {
+                alert('Perfil atualizado com sucesso!');
+            }).catch(error => {
+                alert('Erro ao atualizar perfil: ' + error.message);
+            });
+        });
+    </script>
+    
+    <style>
+        .profile-sections {
+            display: flex;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .profile-nav {
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .profile-nav-btn {
+            padding: 15px 20px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.3s;
+        }
+        
+        .profile-nav-btn.active,
+        .profile-nav-btn:hover {
+            background: #3448c7;
+            color: white;
+            border-color: #3448c7;
+        }
+        
+        .profile-section {
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .address-card,
+        .order-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        .address-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-sections {
+                flex-direction: column;
+            }
+            
+            .profile-nav {
+                flex-direction: row;
+                overflow-x: auto;
+                min-width: auto;
+            }
+            
+            .profile-nav-btn {
+                min-width: 150px;
+            }
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrinho - Gaming Collectibles</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <img src="images/logo.png" alt="Logo" class="logo">
+                <span>LOGO.png</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html">Início</a>
+                <span class="separator">|</span>
+                <a href="action-figures.html">Loja Action Figures</a>
+                <span class="separator">|</span>
+                <a href="stencils.html">Loja Stencils</a>
+            </nav>
+            <div class="nav-actions">
+                <div class="user-menu">
+                    <span class="user-icon">👤</span>
+                    <span id="userDisplay">User / Cadastro</span>
+                    <div class="user-dropdown">
+                        <a href="login.html" id="loginLink">Login</a>
+                        <a href="profile.html" id="profileLink" style="display:none;">Perfil</a>
+                        <a href="#" id="logoutLink" style="display:none;">Logout</a>
+                    </div>
+                </div>
+                <div class="cart-icon">
+                    <span>🛒</span>
+                    <span class="cart-count" id="cartCount">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Cart Content -->
+    <section class="cart-container">
+        <div class="container">
+            <h1>Meu Carrinho</h1>
+            
+            <div class="cart-content">
+                <div class="cart-items" id="cartItems">
+                    <!-- Cart items will be loaded here -->
+                </div>
+                
+                <div class="cart-summary">
+                    <div class="shipping-section">
+                        <h3>Calcular Frete</h3>
+                        <div class="shipping-input">
+                            <input type="text" id="cartZipCode" placeholder="Digite seu CEP" maxlength="9">
+                            <button class="btn btn-primary" onclick="calculateCartShipping()">Calcular</button>
+                        </div>
+                        <div id="cartShippingResult" class="mt-20"></div>
+                    </div>
+                    
+                    <div class="cart-totals">
+                        <div class="total-line">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">R$ 0,00</span>
+                        </div>
+                        <div class="total-line">
+                            <span>Frete:</span>
+                            <span id="shippingCost">A calcular</span>
+                        </div>
+                        <div class="total-line total-final">
+                            <span>Total:</span>
+                            <span id="totalAmount">R$ 0,00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="cart-actions">
+                        <button class="btn btn-secondary" onclick="clearCart()">Limpar Carrinho</button>
+                        <button class="btn btn-primary" onclick="proceedToCheckout()" id="checkoutBtn">Finalizar Compra</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="empty-cart hidden" id="emptyCart">
+                <h2>Seu carrinho está vazio</h2>
+                <p>Adicione produtos ao seu carrinho para continuar</p>
+                <a href="action-figures.html" class="btn btn-primary">Ver Action Figures</a>
+                <a href="stencils.html" class="btn btn-secondary">Ver Stencils</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ATENDIMENTO AO CLIENTE</h3>
+                    <ul>
+                        <li><a href="#">Como Comprar</a></li>
+                        <li><a href="#">Métodos de Pagamento</a></li>
+                        <li><a href="#">Garantia</a></li>
+                        <li><a href="#">Devolução e Reembolso</a></li>
+                        <li><a href="#">Fale Conosco</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>PAGAMENTO</h3>
+                    <div class="payment-icons">
+                        <img src="https://via.placeholder.com/50x30?text=VISA" alt="Visa">
+                        <img src="https://via.placeholder.com/50x30?text=MC" alt="Mastercard">
+                        <img src="https://via.placeholder.com/50x30?text=ELO" alt="Elo">
+                        <img src="https://via.placeholder.com/50x30?text=AMEX" alt="American Express">
+                        <img src="https://via.placeholder.com/50x30?text=PIX" alt="PIX">
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h3>SIGA-NOS</h3>
+                    <div class="social-links">
+                        <a href="#">📷 Instagram</a>
+                        <a href="#">🎵 TikTok</a>
+                        <a href="#">📱 WhatsApp</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025. Todos os direitos reservados</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>
