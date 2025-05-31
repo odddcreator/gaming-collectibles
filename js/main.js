@@ -1,21 +1,37 @@
 // Configuração da API
 const API_BASE_URL = 'https://gaming-collectibles-api.onrender.com';
 
-// Configuração do Mercado Pago
-const mp = new MercadoPago('APP_USR-5ec7f48e-be4d-4a1f-8a41-cb4fa93d0e8f');
+// Configuração do Mercado Pago - só inicializar quando o SDK estiver carregado
+let mp = null;
 
-// Estado global da aplicação - declarar sem inicializar ainda
+// Estado global da aplicação
 let currentUser = null;
 let products = [];
 let cart = [];
 
+// Inicializar MercadoPago quando disponível
+function initializeMercadoPago() {
+    if (typeof MercadoPago !== 'undefined') {
+        mp = new MercadoPago('APP_USR-5ec7f48e-be4d-4a1f-8a41-cb4fa93d0e8f');
+        console.log('MercadoPago inicializado');
+    } else {
+        console.warn('MercadoPago SDK não carregado');
+    }
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar variáveis globais aqui
+    // Inicializar variáveis globais
     cart = JSON.parse(localStorage.getItem('cart')) || [];
+    
+    // Tentar inicializar MercadoPago
+    initializeMercadoPago();
+    
+    // Inicializar app
     initializeApp();
 });
 
+// Resto do código permanece igual...
 async function initializeApp() {
     try {
         await loadProducts();
@@ -27,7 +43,6 @@ async function initializeApp() {
     }
 }
 
-// Carregar produtos da API
 async function loadProducts() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/products`);
@@ -44,7 +59,6 @@ async function loadProducts() {
     }
 }
 
-// Carregar produtos em destaque na página inicial
 function loadFeaturedProducts() {
     const featuredContainer = document.getElementById('featuredProducts');
     if (!featuredContainer) return;
@@ -69,7 +83,6 @@ function loadFeaturedProducts() {
     `).join('');
 }
 
-// Formatar preço
 function formatPrice(price) {
     return new Intl.NumberFormat('pt-BR', {
         minimumFractionDigits: 2,
@@ -77,12 +90,10 @@ function formatPrice(price) {
     }).format(price);
 }
 
-// Visualizar produto
 function viewProduct(productId) {
     window.location.href = `product.html?id=${productId}`;
 }
 
-// Verificar sessão do usuário
 function checkUserSession() {
     const userData = localStorage.getItem('userData');
     if (userData) {
@@ -91,7 +102,6 @@ function checkUserSession() {
     }
 }
 
-// Atualizar exibição do usuário
 function updateUserDisplay() {
     const userDisplay = document.getElementById('userDisplay');
     if (userDisplay) {
@@ -105,7 +115,6 @@ function updateUserDisplay() {
     }
 }
 
-// Modal de login
 function openLoginModal() {
     const modal = document.getElementById('loginModal');
     if (modal) {
@@ -120,7 +129,24 @@ function closeLoginModal() {
     }
 }
 
-// Fechar modal ao clicar fora
+// Placeholder para funções do carrinho
+function updateCartDisplay() {
+    // Esta função será sobrescrita pelo cart.js
+    const cartCount = document.getElementById('cartCount');
+    if (cartCount && typeof cart !== 'undefined') {
+        const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+        cartCount.textContent = totalItems;
+    }
+}
+
+function openCart() {
+    console.log('Função openCart será carregada pelo cart.js');
+}
+
+function closeCart() {
+    console.log('Função closeCart será carregada pelo cart.js');
+}
+
 window.onclick = function(event) {
     const loginModal = document.getElementById('loginModal');
     const cartModal = document.getElementById('cartModal');
@@ -128,18 +154,7 @@ window.onclick = function(event) {
     if (event.target === loginModal) {
         closeLoginModal();
     }
-    if (event.target === cartModal) {
+    if (event.target === cartModal && typeof closeCart === 'function') {
         closeCart();
     }
-}
-
-// Função para abrir carrinho (será definida em cart.js)
-function openCart() {
-    // Esta função será sobrescrita pelo cart.js
-    console.log('Função openCart será carregada pelo cart.js');
-}
-
-function closeCart() {
-    // Esta função será sobrescrita pelo cart.js
-    console.log('Função closeCart será carregada pelo cart.js');
 }

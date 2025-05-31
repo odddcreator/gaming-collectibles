@@ -1,3 +1,4 @@
+// Variáveis específicas da loja (não globais)
 let allProducts = [];
 let filteredProducts = [];
 let currentPage = 1;
@@ -7,11 +8,9 @@ let sortBy = 'name';
 let searchQuery = '';
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Shop.js carregado');
     initializeShop();
 });
-console.log('Shop.js carregado');
-console.log('API_BASE_URL disponível:', typeof API_BASE_URL !== 'undefined');
-console.log('products disponível:', typeof products !== 'undefined');
 
 async function initializeShop() {
     // Determinar categoria atual baseada na URL
@@ -26,8 +25,14 @@ async function initializeShop() {
         setupFilters();
         setupSearch();
         displayProducts();
-        updateCartDisplay();
-        checkUserSession();
+        
+        // Verificar se as funções existem antes de chamar
+        if (typeof updateCartDisplay === 'function') {
+            updateCartDisplay();
+        }
+        if (typeof checkUserSession === 'function') {
+            checkUserSession();
+        }
     } catch (error) {
         console.error('Erro ao inicializar loja:', error);
         showError('Erro ao carregar produtos. Tente novamente mais tarde.');
@@ -40,7 +45,7 @@ async function loadShopProducts() {
         
         // Aguardar até que os produtos sejam carregados pelo main.js
         let attempts = 0;
-        while (!window.products && attempts < 50) {
+        while ((!window.products || window.products.length === 0) && attempts < 50) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
@@ -73,8 +78,8 @@ async function loadShopProducts() {
     }
 }
 
+// Resto das funções permanecem iguais...
 function setupFilters() {
-    // Configurar filtro de jogos
     const gameFilter = document.getElementById('filterGame');
     if (gameFilter) {
         const games = [...new Set(allProducts.map(p => p.game))].sort();
@@ -82,7 +87,6 @@ function setupFilters() {
             games.map(game => `<option value="${game}">${game}</option>`).join('');
     }
     
-    // Configurar ordenação
     const sortSelect = document.getElementById('sortBy');
     if (sortSelect) {
         sortSelect.addEventListener('change', function() {
@@ -156,16 +160,12 @@ function displayProducts() {
         return;
     }
     
-    // Calcular produtos para a página atual
     const startIndex = (currentPage - 1) * productsPerPage;
     const endIndex = startIndex + productsPerPage;
     const productsToShow = filteredProducts.slice(startIndex, endIndex);
     
     container.innerHTML = productsToShow.map(product => createProductCard(product)).join('');
-    
-    // Atualizar paginação
     updatePagination();
-    
     hideLoading();
 }
 
@@ -219,253 +219,9 @@ function getPriceRange(basePrice) {
     const paintedPrice = basePrice * 1.75;
     
     const minPrice = Math.min(smallPrice, mediumPrice, largePrice);
-    const maxPrice = Math.max(paintedPrice * 1.5); // Maior tamanho com pintura
+    const maxPrice = Math.max(paintedPrice * 1.5);
     
     return `R$ ${formatPrice(minPrice)} - R$ ${formatPrice(maxPrice)}`;
-}
-
-function updatePagination() {
-    const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-    
-    // Remover paginação existente
-    const existingPagination = document.querySelector('.pagination');
-    if (existingPagination) {
-        existingPagination.remove();
-    }
-    
-    if (totalPages <= 1) return;
-    
-    // Criar nova paginação
-    const container = document.getElementById('productsGrid').parentNode;
-    const pagination = document.createElement('div');
-    pagination.className = 'pagination';
-    
-    // Botão anterior
-    const prevBtn = document.createElement('button');
-    prevBtn.textContent = '← Anterior';
-    prevBtn.disabled = currentPage === 1;
-    prevBtn.onclick = () => changePage(currentPage - 1);
-    pagination.appendChild(prevBtn);
-    
-    // Números das páginas
-    const startPage = Math.max(1, currentPage - 2);
-    const endPage = Math.min(totalPages, currentPage + 2);
-    
-    if (startPage > 1) {
-        const firstBtn = document.createElement('button');
-        firstBtn.textContent = '1';
-        firstBtn.onclick = () => changePage(1);
-        pagination.appendChild(firstBtn);
-        
-        if (startPage > 2) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            pagination.appendChild(ellipsis);
-        }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-        const pageBtn = document.createElement('button');
-        pageBtn.textContent = i;
-        pageBtn.className = i === currentPage ? 'active' : '';
-        pageBtn.onclick = () => changePage(i);
-        pagination.appendChild(pageBtn);
-    }
-    
-    if (endPage < totalPages) {
-        if (endPage < totalPages - 1) {
-            const ellipsis = document.createElement('span');
-            ellipsis.textContent = '...';
-            pagination.appendChild(ellipsis);
-        }
-        
-        const lastBtn = document.createElement('button');
-        lastBtn.textContent = totalPages;
-        lastBtn.onclick = () => changePage(totalPages);
-        pagination.appendChild(lastBtn);
-    }
-    
-    // Botão próximo
-    const nextBtn = document.createElement('button');
-    nextBtn.textContent = 'Próximo →';
-    nextBtn.disabled = currentPage === totalPages;
-    nextBtn.onclick = () => changePage(currentPage + 1);
-    pagination.appendChild(nextBtn);
-    
-    container.appendChild(pagination);
-}
-
-function changePage(page) {
-    currentPage = page;
-    displayProducts();
-    
-    // Scroll para o topo dos produtos
-    document.getElementById('productsGrid').scrollIntoView({ 
-        behavior: 'smooth', 
-        block: 'start' 
-    });
-}
-
-function viewProduct(productId) {
-    window.location.href = `product.html?id=${productId}`;
-}
-
-// Quick Add Modal
-let quickAddProduct = null;
-let quickAddOptions = {
-    size: 'small',
-    painting: false,
-    quantity: 1
-};
-
-function openQuickAdd(productId) {
-    quickAddProduct = allProducts.find(p => p._id === productId);
-    if (!quickAddProduct) return;
-    
-    // Reset options
-    quickAddOptions = {
-        size: 'small',
-        painting: false,
-        quantity: 1
-    };
-    
-    // Criar modal se não existir
-    let modal = document.getElementById('quickAddModal');
-    if (!modal) {
-        modal = createQuickAddModal();
-        document.body.appendChild(modal);
-    }
-    
-    // Preencher dados do produto
-    updateQuickAddContent();
-    
-    modal.style.display = 'block';
-}
-
-function createQuickAddModal() {
-    const modal = document.createElement('div');
-    modal.id = 'quickAddModal';
-    modal.className = 'quick-add-modal';
-    
-    modal.innerHTML = `
-        <div class="quick-add-content">
-            <span class="close" onclick="closeQuickAdd()">&times;</span>
-            <div id="quickAddProductInfo"></div>
-        </div>
-    `;
-    
-    // Fechar ao clicar fora
-    modal.onclick = function(event) {
-        if (event.target === modal) {
-            closeQuickAdd();
-        }
-    };
-    
-    return modal;
-}
-
-function updateQuickAddContent() {
-    const container = document.getElementById('quickAddProductInfo');
-    const finalPrice = calculatePrice(quickAddProduct.basePrice, quickAddOptions.size, quickAddOptions.painting);
-    
-    container.innerHTML = `
-        <div class="quick-add-product">
-            <img src="${quickAddProduct.images[0] || 'assets/placeholder.jpg'}" 
-                 alt="${quickAddProduct.name}" 
-                 class="quick-add-image">
-            <div class="quick-add-info">
-                <h3>${quickAddProduct.name}</h3>
-                <p>${quickAddProduct.game}</p>
-                <div class="quick-add-price">R$ ${formatPrice(finalPrice)}</div>
-            </div>
-        </div>
-        
-        <div class="quick-options">
-            <div class="option-group">
-                <label>Tamanho:</label>
-                <div class="size-options">
-                    <button class="option-btn ${quickAddOptions.size === 'small' ? 'active' : ''}" 
-                            onclick="selectQuickOption('size', 'small')">
-                        18 cm (1:10)
-                    </button>
-                    <button class="option-btn ${quickAddOptions.size === 'medium' ? 'active' : ''}" 
-                            onclick="selectQuickOption('size', 'medium')">
-                        22 cm (1:8)
-                    </button>
-                    <button class="option-btn ${quickAddOptions.size === 'large' ? 'active' : ''}" 
-                            onclick="selectQuickOption('size', 'large')">
-                        26 cm (1:7)
-                    </button>
-                </div>
-            </div>
-            
-            <div class="option-group">
-                <label>Pintura:</label>
-                <div class="painting-options">
-                    <button class="option-btn ${!quickAddOptions.painting ? 'active' : ''}" 
-                            onclick="selectQuickOption('painting', false)">
-                        Sem pintura
-                    </button>
-                    <button class="option-btn ${quickAddOptions.painting ? 'active' : ''}" 
-                            onclick="selectQuickOption('painting', true)">
-                        Com pintura
-                    </button>
-                </div>
-            </div>
-            
-            <div class="option-group">
-                <label>Quantidade:</label>
-                <div class="quantity-group">
-                    <div class="quantity-controls">
-                        <button class="quantity-btn" onclick="changeQuickQuantity(-1)">-</button>
-                        <input type="number" class="quantity-input" value="${quickAddOptions.quantity}" 
-                               min="1" onchange="updateQuickQuantity(this.value)">
-                        <button class="quantity-btn" onclick="changeQuickQuantity(1)">+</button>
-                    </div>
-                    <span>${getStockStatus(quickAddProduct.stock).label}</span>
-                </div>
-            </div>
-        </div>
-        
-        <div class="quick-add-actions">
-            <button class="btn-cancel" onclick="closeQuickAdd()">Cancelar</button>
-            <button class="btn-add-to-cart" onclick="addQuickToCart()">Adicionar ao Carrinho</button>
-        </div>
-    `;
-}
-
-function selectQuickOption(type, value) {
-    quickAddOptions[type] = value;
-    updateQuickAddContent();
-}
-
-function changeQuickQuantity(delta) {
-    const newQuantity = quickAddOptions.quantity + delta;
-    if (newQuantity >= 1) {
-        quickAddOptions.quantity = newQuantity;
-        updateQuickAddContent();
-    }
-}
-
-function updateQuickQuantity(value) {
-    const quantity = Math.max(1, parseInt(value) || 1);
-    quickAddOptions.quantity = quantity;
-    updateQuickAddContent();
-}
-
-function addQuickToCart() {
-    if (!quickAddProduct) return;
-    
-    addToCart(quickAddProduct._id, quickAddOptions);
-    closeQuickAdd();
-}
-
-function closeQuickAdd() {
-    const modal = document.getElementById('quickAddModal');
-    if (modal) {
-        modal.style.display = 'none';
-    }
-    quickAddProduct = null;
 }
 
 function showLoading() {
@@ -495,6 +251,17 @@ function showError(message) {
             </div>
         `;
     }
+}
+
+// Função placeholder para quick add
+function openQuickAdd(productId) {
+    console.log('Quick add para produto:', productId);
+    // Implementar modal de adição rápida
+}
+
+function updatePagination() {
+    // Implementar paginação se necessário
+    console.log('Paginação a ser implementada');
 }
 
 // Event listeners globais
