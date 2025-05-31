@@ -9,6 +9,9 @@ let searchQuery = '';
 document.addEventListener('DOMContentLoaded', function() {
     initializeShop();
 });
+console.log('Shop.js carregado');
+console.log('API_BASE_URL disponível:', typeof API_BASE_URL !== 'undefined');
+console.log('products disponível:', typeof products !== 'undefined');
 
 async function initializeShop() {
     // Determinar categoria atual baseada na URL
@@ -19,7 +22,7 @@ async function initializeShop() {
     }
     
     try {
-        await loadProducts();
+        await loadShopProducts();
         setupFilters();
         setupSearch();
         displayProducts();
@@ -31,23 +34,37 @@ async function initializeShop() {
     }
 }
 
-async function loadProducts() {
+async function loadShopProducts() {
     try {
         showLoading();
-        const response = await fetch(`${API_BASE_URL}/api/products`);
         
-        if (response.ok) {
-            allProducts = await response.json();
-            
-            // Filtrar por categoria se especificada
-            if (currentCategory) {
-                allProducts = allProducts.filter(product => product.category === currentCategory);
-            }
-            
-            filteredProducts = [...allProducts];
-        } else {
-            throw new Error('Falha ao carregar produtos');
+        // Aguardar até que os produtos sejam carregados pelo main.js
+        let attempts = 0;
+        while (!window.products && attempts < 50) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
+        
+        if (window.products && window.products.length > 0) {
+            allProducts = [...window.products];
+        } else {
+            // Fallback: carregar diretamente da API
+            const response = await fetch(`${API_BASE_URL}/api/products`);
+            if (response.ok) {
+                allProducts = await response.json();
+            } else {
+                throw new Error('Falha ao carregar produtos');
+            }
+        }
+        
+        // Filtrar por categoria se especificada
+        if (currentCategory) {
+            allProducts = allProducts.filter(product => product.category === currentCategory);
+        }
+        
+        filteredProducts = [...allProducts];
+        console.log('Produtos da loja carregados:', allProducts.length);
+        
     } catch (error) {
         console.error('Erro ao carregar produtos:', error);
         allProducts = [];

@@ -4,13 +4,15 @@ const API_BASE_URL = 'https://gaming-collectibles-api.onrender.com';
 // Configuração do Mercado Pago
 const mp = new MercadoPago('APP_USR-5ec7f48e-be4d-4a1f-8a41-cb4fa93d0e8f');
 
-// Estado global da aplicação
+// Estado global da aplicação - declarar sem inicializar ainda
 let currentUser = null;
 let products = [];
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let cart = [];
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar variáveis globais aqui
+    cart = JSON.parse(localStorage.getItem('cart')) || [];
     initializeApp();
 });
 
@@ -31,6 +33,7 @@ async function loadProducts() {
         const response = await fetch(`${API_BASE_URL}/api/products`);
         if (response.ok) {
             products = await response.json();
+            console.log('Produtos carregados:', products.length);
         } else {
             console.warn('Não foi possível carregar produtos da API');
             products = [];
@@ -91,22 +94,30 @@ function checkUserSession() {
 // Atualizar exibição do usuário
 function updateUserDisplay() {
     const userDisplay = document.getElementById('userDisplay');
-    if (currentUser) {
-        userDisplay.textContent = currentUser.name || currentUser.email;
-        userDisplay.onclick = () => window.location.href = 'profile.html';
-    } else {
-        userDisplay.textContent = 'User / Cadastro';
-        userDisplay.onclick = openLoginModal;
+    if (userDisplay) {
+        if (currentUser) {
+            userDisplay.textContent = currentUser.name || currentUser.email;
+            userDisplay.onclick = () => window.location.href = 'profile.html';
+        } else {
+            userDisplay.textContent = 'User / Cadastro';
+            userDisplay.onclick = openLoginModal;
+        }
     }
 }
 
 // Modal de login
 function openLoginModal() {
-    document.getElementById('loginModal').style.display = 'block';
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
 }
 
 function closeLoginModal() {
-    document.getElementById('loginModal').style.display = 'none';
+    const modal = document.getElementById('loginModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
 }
 
 // Fechar modal ao clicar fora
@@ -120,4 +131,15 @@ window.onclick = function(event) {
     if (event.target === cartModal) {
         closeCart();
     }
+}
+
+// Função para abrir carrinho (será definida em cart.js)
+function openCart() {
+    // Esta função será sobrescrita pelo cart.js
+    console.log('Função openCart será carregada pelo cart.js');
+}
+
+function closeCart() {
+    // Esta função será sobrescrita pelo cart.js
+    console.log('Função closeCart será carregada pelo cart.js');
 }
