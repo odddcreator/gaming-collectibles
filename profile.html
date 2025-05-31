@@ -187,6 +187,69 @@
             </form>
         </div>
     </div>
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>ATENDIMENTO AO CLIENTE</h3>
+                <ul>
+                    <li><a href="#">Como Comprar</a></li>
+                    <li><a href="#">Métodos de Pagamento</a></li>
+                    <li><a href="#">Garantia</a></li>
+                    <li><a href="#">Devolução e Reembolso</a></li>
+                    <li><a href="#">Fale Conosco</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>PAGAMENTO</h3>
+                <div class="payment-icons">
+                    <img src="assets/payment-icons/visa.png" alt="Visa">
+                    <img src="assets/payment-icons/mastercard.png" alt="Mastercard">
+                    <img src="assets/payment-icons/hipercard.png" alt="Hipercard">
+                    <img src="assets/payment-icons/elo.png" alt="Elo">
+                    <img src="assets/payment-icons/amex.png" alt="American Express">
+                    <img src="assets/payment-icons/boleto.png" alt="Boleto">
+                    <img src="assets/payment-icons/pix.png" alt="PIX">
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>SIGA-NOS</h3>
+                <div class="social-links">
+                    <a href="#" target="_blank">Instagram</a>
+                    <a href="#" target="_blank">TikTok</a>
+                    <a href="#" target="_blank">WhatsApp</a>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2025. Todos os direitos reservados</p>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeCart()">&times;</span>
+            <h2>Carrinho de Compras</h2>
+            <div id="cartItems"></div>
+            <div class="cart-total">
+                <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
+            </div>
+            <button class="btn btn-primary" onclick="proceedToCheckout()">Finalizar Compra</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeLoginModal()">&times;</span>
+            <h2>Login</h2>
+            <div id="g_id_onload"
+                 data-client_id="901494380579-5m43l4g40g523358l8tmirkn0nqpr1ed.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse">
+            </div>
+            <div class="g_id_signin" data-type="standard"></div>
+        </div>
+    </div>
 
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
