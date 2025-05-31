@@ -94,14 +94,6 @@ function viewProduct(productId) {
     window.location.href = `product.html?id=${productId}`;
 }
 
-function checkUserSession() {
-    const userData = localStorage.getItem('userData');
-    if (userData) {
-        currentUser = JSON.parse(userData);
-        updateUserDisplay();
-    }
-}
-
 function updateUserDisplay() {
     const userDisplay = document.getElementById('userDisplay');
     if (userDisplay) {
@@ -114,6 +106,15 @@ function updateUserDisplay() {
         }
     }
 }
+
+function checkUserSession() {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+        currentUser = JSON.parse(userData);
+        updateUserDisplay();
+    }
+}
+
 
 function openLoginModal() {
     const modal = document.getElementById('loginModal');
