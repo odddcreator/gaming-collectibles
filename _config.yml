@@ -1,0 +1,20 @@
+# _config.yml
+exclude:
+  - api/
+  - node_modules/
+  - package.json
+  - package-lock.json
+  - README.md
+  - .gitignore
+  - Gemfile
+  - Gemfile.lock
+
+# Configurações básicas
+title: "3D CutLabs"
+description: "Action Figures Gaming & Stencils DIY"
+url: "https://3dcutlabs.com.br"
+
+# Plugins do GitHub Pages
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
