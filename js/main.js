@@ -37,6 +37,7 @@ async function initializeApp() {
         await loadProducts();
         loadFeaturedProducts();
         updateCartDisplay();
+        updateUserDisplay()
         checkUserSession();
     } catch (error) {
         console.error('Erro ao inicializar aplicação:', error);
