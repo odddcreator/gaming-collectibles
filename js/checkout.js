@@ -217,22 +217,121 @@ async function calculateShipping() {
 }
 
 async function calculateShippingOptions(cep, weight) {
-    // Simulação da API dos Correios - substituir pela integração real
-    return [
-        {
-            name: 'PAC',
-            price: Math.max(15.50, weight * 0.01),
-            deliveryTime: 8
-        },
-        {
-            name: 'SEDEX',
-            price: Math.max(25.90, weight * 0.02),
-            deliveryTime: 3
+    try {
+        console.log('Calculando frete para:', { cep, weight });
+        
+        const response = await fetch(`${API_BASE_URL}/api/shipping/calculate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                cepDestino: cep,
+                peso: weight, // em gramas
+                comprimento: 20, // cm - ajuste conforme seus produtos
+                altura: 15,     // cm
+                largura: 15,    // cm
+                diametro: 0     // cm (para produtos cilíndricos)
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status}`);
         }
-    ];
+        
+        const shippingOptions = await response.json();
+        
+        console.log('Opções de frete recebidas:', shippingOptions);
+        
+        // Verificar se retornou opções válidas
+        if (!shippingOptions || shippingOptions.length === 0) {
+            throw new Error('Nenhuma opção de frete disponível');
+        }
+        
+        return shippingOptions;
+        
+    } catch (error) {
+        console.error('Erro ao calcular frete real:', error);
+        
+        // Fallback local em caso de erro total
+        return [
+            {
+                name: 'PAC (Estimativa)',
+                price: Math.max(15.50, weight * 0.01),
+                deliveryTime: 8,
+                service: 'fallback-local'
+            },
+            {
+                name: 'SEDEX (Estimativa)',
+                price: Math.max(25.90, weight * 0.02),
+                deliveryTime: 3,
+                service: 'fallback-local'
+            }
+        ];
+    }
 }
 
+// Também atualizar a função calculateShipping para ter melhor tratamento de erro
+async function calculateShipping() {
+    const cep = document.getElementById('zipCode').value.replace(/\D/g, '');
+    
+    if (cep.length !== 8) return;
+    
+    const container = document.getElementById('shippingMethodsContainer');
+    container.innerHTML = '<p>Calculando frete...</p>';
+    
+    try {
+        // Calcular peso total dos itens no carrinho
+        const totalWeight = cart.reduce((sum, item) => {
+            const product = products.find(p => p._id === item.id);
+            const productWeight = product?.weight || 100; // peso padrão se não encontrar
+            return sum + (productWeight * item.quantity);
+        }, 0);
+        
+        console.log('Peso total do carrinho:', totalWeight, 'gramas');
+        
+        const shippingMethods = await calculateShippingOptions(cep, totalWeight);
+        
+        if (shippingMethods.length === 0) {
+            container.innerHTML = '<p style="color: orange;">Não foi possível calcular o frete. Entre em contato conosco.</p>';
+            return;
+        }
+        
+        container.innerHTML = shippingMethods.map((method, index) => `
+            <div class="shipping-method" onclick="selectShippingMethod(${index})">
+                <div class="shipping-info">
+                    <input type="radio" name="shipping" value="${index}" id="shipping_${index}">
+                    <label for="shipping_${index}">
+                        <strong>${method.name}</strong><br>
+                        <small>${method.deliveryTime} dias úteis</small>
+                        ${method.service?.includes('fallback') ? '<br><small style="color: orange;">*Valor estimado</small>' : ''}
+                    </label>
+                </div>
+                <div class="shipping-price">R$ ${formatPrice(method.price)}</div>
+            </div>
+        `).join('');
+        
+        // Armazenar métodos para seleção posterior
+        window.currentShippingMethods = shippingMethods;
+        
+    } catch (error) {
+        console.error('Erro ao calcular frete:', error);
+        container.innerHTML = `
+            <p style="color: red;">Erro ao calcular frete.</p>
+            <button onclick="calculateShipping()" class="btn btn-secondary" style="margin-top: 10px;">
+                Tentar Novamente
+            </button>
+        `;
+    }
+}
+
+// Atualizar selectShippingMethod para usar os dados armazenados
 function selectShippingMethod(index) {
+    if (!window.currentShippingMethods || !window.currentShippingMethods[index]) {
+        console.error('Método de frete não encontrado');
+        return;
+    }
+    
     // Remover seleção anterior
     document.querySelectorAll('.shipping-method').forEach(el => {
         el.classList.remove('selected');
@@ -244,10 +343,10 @@ function selectShippingMethod(index) {
     
     selectedShippingMethod = {
         index: index,
-        name: document.querySelector(`.shipping-method:nth-child(${index + 1}) strong`).textContent,
-        price: parseFloat(document.querySelector(`.shipping-method:nth-child(${index + 1}) .shipping-price`).textContent.replace('R$ ', '').replace(',', '.')),
-        deliveryTime: parseInt(document.querySelector(`.shipping-method:nth-child(${index + 1}) small`).textContent)
+        ...window.currentShippingMethods[index]
     };
+    
+    console.log('Método selecionado:', selectedShippingMethod);
     
     updateSummary();
 }

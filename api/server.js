@@ -50,7 +50,191 @@ const upload = multer({
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+// Configurações dos Correios (adicione no .env também)
+const CORREIOS_CONFIG = {
+    cepOrigem: process.env.CEP_ORIGEM || '01310-100', // CEP da sua empresa
+    usuario: process.env.CORREIOS_USUARIO || '', // Usuário dos correios (se tiver contrato)
+    senha: process.env.CORREIOS_SENHA || '', // Senha dos correios (se tiver contrato)
+    cartaoPostagem: process.env.CARTAO_POSTAGEM || '', // Cartão de postagem (se tiver)
+    codigoAdministrativo: process.env.CODIGO_ADMINISTRATIVO || '' // Código administrativo (se tiver)
+};
 
+// Endpoint para calcular frete
+app.post('/api/shipping/calculate', async (req, res) => {
+    try {
+        const { cepDestino, peso, comprimento = 20, altura = 15, largura = 15, diametro = 0 } = req.body;
+        
+        console.log('Calculando frete:', { cepDestino, peso, comprimento, altura, largura });
+        
+        // Validar CEP
+        if (!cepDestino || cepDestino.replace(/\D/g, '').length !== 8) {
+            return res.status(400).json({ error: 'CEP de destino inválido' });
+        }
+        
+        // Validar peso (mínimo 100g para os Correios)
+        const pesoFinal = Math.max(peso, 100);
+        
+        try {
+            // Tentar API oficial dos Correios primeiro
+            const shippingOptions = await calculateCorreiosShipping({
+                cepOrigem: CORREIOS_CONFIG.cepOrigem,
+                cepDestino: cepDestino.replace(/\D/g, ''),
+                peso: pesoFinal,
+                comprimento,
+                altura,
+                largura,
+                diametro
+            });
+            
+            res.json(shippingOptions);
+        } catch (correiosError) {
+            console.warn('Erro na API dos Correios, usando fallback:', correiosError.message);
+            
+            // Fallback com cálculo baseado em tabela
+            const fallbackOptions = calculateFallbackShipping(cepDestino, pesoFinal);
+            res.json(fallbackOptions);
+        }
+        
+    } catch (error) {
+        console.error('Erro ao calcular frete:', error);
+        res.status(500).json({ error: 'Erro interno ao calcular frete' });
+    }
+});
+
+// Função para calcular frete via API oficial dos Correios
+async function calculateCorreiosShipping({ cepOrigem, cepDestino, peso, comprimento, altura, largura, diametro }) {
+    const fetch = require('node-fetch'); // npm install node-fetch@2
+    
+    // Códigos dos serviços dos Correios
+    const servicos = [
+        { codigo: '03298', nome: 'PAC' },        // PAC Contrato Agência
+        { codigo: '03220', nome: 'SEDEX' }       // SEDEX Contrato Agência
+    ];
+    
+    const results = [];
+    
+    for (const servico of servicos) {
+        try {
+            // URL da API oficial dos Correios (nova API REST)
+            const url = `https://cep.correios.com.br/cep/app/consulta/precosPrazos`;
+            
+            const params = new URLSearchParams({
+                nCdEmpresa: CORREIOS_CONFIG.codigoAdministrativo || '',
+                sDsSenha: CORREIOS_CONFIG.senha || '',
+                nCdServico: servico.codigo,
+                sCepOrigem: cepOrigem,
+                sCepDestino: cepDestino,
+                nVlPeso: (peso / 1000).toString(), // kg
+                nCdFormato: '1', // Caixa/pacote
+                nVlComprimento: comprimento.toString(),
+                nVlAltura: altura.toString(),
+                nVlLargura: largura.toString(),
+                nVlDiametro: diametro.toString(),
+                sCdMaoPropria: 'n',
+                nVlValorDeclarado: '0',
+                sCdAvisoRecebimento: 'n'
+            });
+            
+            const response = await fetch(`${url}?${params}`, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (compatible; 3DCutLabs/1.0)',
+                    'Accept': 'application/json'
+                },
+                timeout: 10000
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.Erro && data.Erro !== '0') {
+                console.warn(`Erro no serviço ${servico.nome}:`, data.MsgErro);
+                continue;
+            }
+            
+            results.push({
+                name: servico.nome,
+                price: parseFloat(data.Valor.replace(',', '.')),
+                deliveryTime: parseInt(data.PrazoEntrega),
+                service: servico.codigo
+            });
+            
+        } catch (error) {
+            console.warn(`Erro ao consultar ${servico.nome}:`, error.message);
+            continue;
+        }
+    }
+    
+    if (results.length === 0) {
+        throw new Error('Nenhum serviço disponível');
+    }
+    
+    return results;
+}
+
+// Função de fallback com tabela de preços
+function calculateFallbackShipping(cepDestino, peso) {
+    const cep = cepDestino.replace(/\D/g, '');
+    const cepNum = parseInt(cep.substring(0, 2));
+    
+    // Determinar região baseada no CEP
+    let regiao = 'sudeste'; // padrão
+    
+    if (cepNum >= 1 && cepNum <= 19) regiao = 'sudeste';        // SP
+    else if (cepNum >= 20 && cepNum <= 28) regiao = 'sudeste';  // RJ/ES
+    else if (cepNum >= 30 && cepNum <= 39) regiao = 'sudeste';  // MG
+    else if (cepNum >= 40 && cepNum <= 48) regiao = 'nordeste'; // BA/SE/AL
+    else if (cepNum >= 49 && cepNum <= 56) regiao = 'nordeste'; // PE/PB/RN/CE
+    else if (cepNum >= 57 && cepNum <= 63) regiao = 'nordeste'; // AL/PI/MA
+    else if (cepNum >= 64 && cepNum <= 72) regiao = 'norte';    // GO/TO/MT/MS
+    else if (cepNum >= 73 && cepNum <= 77) regiao = 'norte';    // RO/AC/AM/RR/AP/PA
+    else if (cepNum >= 78 && cepNum <= 78) regiao = 'norte';    // MT
+    else if (cepNum >= 79 && cepNum <= 79) regiao = 'norte';    // MS
+    else if (cepNum >= 80 && cepNum <= 87) regiao = 'sul';      // PR
+    else if (cepNum >= 88 && cepNum <= 89) regiao = 'sul';      // SC
+    else if (cepNum >= 90 && cepNum <= 99) regiao = 'sul';      // RS
+    
+    // Tabela de preços por região e peso
+    const tabelaPrecos = {
+        sudeste: {
+            pac: { base: 15.50, adicionalPorKg: 8.00, prazo: 8 },
+            sedex: { base: 25.90, adicionalPorKg: 12.00, prazo: 3 }
+        },
+        sul: {
+            pac: { base: 18.50, adicionalPorKg: 9.50, prazo: 10 },
+            sedex: { base: 32.90, adicionalPorKg: 15.00, prazo: 4 }
+        },
+        nordeste: {
+            pac: { base: 22.50, adicionalPorKg: 11.00, prazo: 12 },
+            sedex: { base: 38.90, adicionalPorKg: 18.00, prazo: 5 }
+        },
+        norte: {
+            pac: { base: 28.50, adicionalPorKg: 14.00, prazo: 15 },
+            sedex: { base: 45.90, adicionalPorKg: 22.00, prazo: 7 }
+        }
+    };
+    
+    const precos = tabelaPrecos[regiao];
+    const pesoKg = peso / 1000;
+    
+    return [
+        {
+            name: 'PAC',
+            price: Math.round((precos.pac.base + (pesoKg * precos.pac.adicionalPorKg)) * 100) / 100,
+            deliveryTime: precos.pac.prazo,
+            service: 'fallback-pac'
+        },
+        {
+            name: 'SEDEX',
+            price: Math.round((precos.sedex.base + (pesoKg * precos.sedex.adicionalPorKg)) * 100) / 100,
+            deliveryTime: precos.sedex.prazo,
+            service: 'fallback-sedex'
+        }
+    ];
+}
 // Routes
 
 // Endpoint específico para servir imagens (com headers corretos)
