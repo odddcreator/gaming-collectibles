@@ -10,7 +10,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use('api/uploads/', express.static('uploads'));
+app.use('uploads/', express.static('uploads'));
 
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
@@ -21,7 +21,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJ
 // Configurar multer para upload de imagens
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'api/uploads/')
+        cb(null, 'uploads/')
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname))
@@ -107,7 +107,7 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
         
         // Processar imagens
         if (req.files) {
-            productData.images = req.files.map(file => `api/uploads/${file.filename}`);
+            productData.images = req.files.map(file => `uploads/${file.filename}`);
         }
         
         const product = new Product(productData);
@@ -123,7 +123,7 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
         const productData = req.body;
         
         if (req.files && req.files.length > 0) {
-            productData.images = req.files.map(file => `api/uploads/${file.filename}`);
+            productData.images = req.files.map(file => `uploads/${file.filename}`);
         }
         
         const product = await Product.findByIdAndUpdate(req.params.id, productData, { new: true });
