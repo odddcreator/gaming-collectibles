@@ -1,4 +1,3 @@
-// models/Order.js
 const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
@@ -13,6 +12,8 @@ const orderItemSchema = new mongoose.Schema({
 
 const orderSchema = new mongoose.Schema({
     orderNumber: { type: String, unique: true },
+    external_reference: { type: String, unique: true }, // Para Mercado Pago
+    mercadopago_preference_id: String, // ID da preferência do MP
     customer: {
         id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
         name: String,
@@ -43,7 +44,12 @@ const orderSchema = new mongoose.Schema({
             enum: ['pending', 'approved', 'rejected', 'cancelled'],
             default: 'pending'
         },
-        paidAt: Date
+        paidAt: Date,
+        details: {
+            installments: Number,
+            card_last_four_digits: String,
+            payment_type: String
+        }
     },
     totals: {
         subtotal: Number,
@@ -52,8 +58,8 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'processing', 'shipped', 'completed', 'cancelled'],
-        default: 'pending'
+        enum: ['pending_payment', 'pending', 'processing', 'shipped', 'completed', 'cancelled'], // ✅ Adicionado pending_payment
+        default: 'pending_payment' // ✅ Mudado default para pending_payment
     },
     notes: String
 }, {

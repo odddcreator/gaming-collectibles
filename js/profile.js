@@ -454,6 +454,7 @@ async function deleteAccount() {
 
 function getStatusLabel(status) {
     const labels = {
+        'pending_payment': 'Aguardando Pagamento',
         'pending': 'Pendente',
         'processing': 'Processando',
         'shipped': 'Enviado',

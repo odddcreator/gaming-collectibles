@@ -153,7 +153,7 @@ async function loadOrders() {
                 <td>#${order._id.slice(-6)}</td>
                 <td>${order.customer.name}</td>
                 <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
-                <td>R$ ${formatPrice(order.total)}</td>
+                <td>R$ ${formatPrice(order.totals.total)}</td>
                 <td>
                     <span class="status-badge status-${order.status}">
                         ${getStatusLabel(order.status)}
@@ -162,6 +162,7 @@ async function loadOrders() {
                 <td>
                     <button onclick="viewOrder('${order._id}')" class="btn-small">Ver</button>
                     <select onchange="updateOrderStatus('${order._id}', this.value)">
+                        <option value="pending_payment" ${order.status === 'pending_payment' ? 'selected' : ''}>Aguardando Pagamento</option>
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pendente</option>
                         <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processando</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Enviado</option>
@@ -302,6 +303,7 @@ async function updateOrderStatus(orderId, newStatus) {
 
 function getStatusLabel(status) {
     const labels = {
+        'pending_payment': 'Aguardando Pagamento', // ✅ Novo status
         'pending': 'Pendente',
         'processing': 'Processando',
         'shipped': 'Enviado',

@@ -500,4 +500,8 @@
     .complete-profile-card {
         padding: 2rem 1rem;
     }
+    .status-pending_payment {
+        background: #fef3c7;
+        color: #92400e;
+    }
 }
