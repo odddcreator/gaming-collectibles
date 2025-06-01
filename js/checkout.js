@@ -3,7 +3,24 @@ let shippingData = {};
 let selectedShippingMethod = null;
 let orderData = {};
 
+// Função auxiliar para verificar login (adicione em profile.js, checkout.js, admin.js)
+function requireLogin(redirectMessage = 'Faça login para acessar esta página') {
+    checkUserSession();
+    if (!currentUser) {
+        alert(redirectMessage);
+        window.location.href = 'index.html';
+        return false;
+    }
+    return true;
+}
+
+// Use assim no início do DOMContentLoaded:
 document.addEventListener('DOMContentLoaded', function() {
+    if (!requireLogin('Faça login para acessar seu perfil')) {
+        return;
+    }
+    
+    
     // Verificar se há itens no carrinho
     if (cart.length === 0) {
         alert('Seu carrinho está vazio');
@@ -13,13 +30,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Verificar se o usuário está logado
     if (!currentUser) {
-        alert('Faça login para continuar');
+        alert('Faça login para continuar com a compra');
         window.location.href = 'index.html';
         return;
     }
     
     initializeCheckout();
 });
+
+// Mover checkUserSession para o início
+function checkUserSession() {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('Usuário logado no checkout:', currentUser.email);
+        } catch (error) {
+            console.error('Erro ao carregar dados do usuário:', error);
+            localStorage.removeItem('userData');
+            currentUser = null;
+        }
+    } else {
+        currentUser = null;
+    }
+}
 
 function initializeCheckout() {
     updateCartDisplay();

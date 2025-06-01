@@ -1,15 +1,42 @@
 let userAddresses = [];
 let editingAddressId = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Verificar se o usuário está logado
+// Função auxiliar para verificar login (adicione em profile.js, checkout.js, admin.js)
+function requireLogin(redirectMessage = 'Faça login para acessar esta página') {
+    checkUserSession();
     if (!currentUser) {
+        alert(redirectMessage);
         window.location.href = 'index.html';
+        return false;
+    }
+    return true;
+}
+
+// Use assim no início do DOMContentLoaded:
+document.addEventListener('DOMContentLoaded', function() {
+    if (!requireLogin('Faça login para acessar seu perfil')) {
         return;
     }
     
-    initializeProfile();
+    // Resto da inicialização...
 });
+
+// Mover checkUserSession para o início
+function checkUserSession() {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('Usuário logado:', currentUser.email);
+        } catch (error) {
+            console.error('Erro ao carregar dados do usuário:', error);
+            localStorage.removeItem('userData');
+            currentUser = null;
+        }
+    } else {
+        currentUser = null;
+    }
+}
 
 async function initializeProfile() {
     try {

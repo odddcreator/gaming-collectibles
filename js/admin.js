@@ -5,24 +5,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function checkAdminAuth() {
-    const userData = localStorage.getItem('userData');
-    if (!userData) {
+    // Primeiro carregar a sessão
+    checkUserSession();
+    
+    if (!currentUser) {
         redirectToLogin();
         return;
     }
     
-    const user = JSON.parse(userData);
-    
     // Verificar se o usuário é admin
-    if (!user.isAdmin) {
+    if (!currentUser.isAdmin) {
         alert('Acesso negado. Você não tem permissões de administrador.');
         window.location.href = 'index.html';
         return;
     }
     
     isAdminAuthenticated = true;
-    document.getElementById('adminUserName').textContent = user.name || user.email;
+    document.getElementById('adminUserName').textContent = currentUser.name || currentUser.email;
     initializeAdmin();
+}
+
+function checkUserSession() {
+    const userData = localStorage.getItem('userData');
+    if (userData) {
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('Sessão admin carregada:', currentUser.email);
+        } catch (error) {
+            console.error('Erro ao carregar dados do usuário:', error);
+            localStorage.removeItem('userData');
+            currentUser = null;
+        }
+    } else {
+        currentUser = null;
+    }
 }
 
 function redirectToLogin() {

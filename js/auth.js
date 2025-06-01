@@ -18,8 +18,9 @@ window.handleCredentialResponse = async function(response) {
         if (existingUser.ok) {
             // Usuário existe, fazer login
             const user = await existingUser.json();
-            currentUser = user;
+            currentUser = user; // Atualizar variável global
             localStorage.setItem('userData', JSON.stringify(user));
+            console.log('Login realizado com sucesso:', user.email);
         } else {
             // Novo usuário, redirecionar para completar cadastro
             localStorage.setItem('tempUserData', JSON.stringify(userData));
@@ -29,6 +30,12 @@ window.handleCredentialResponse = async function(response) {
 
         updateUserDisplay();
         closeLoginModal();
+        
+        // Se estiver em uma página que requer login, recarregar
+        if (window.location.pathname.includes('profile.html') || 
+            window.location.pathname.includes('checkout.html')) {
+            window.location.reload();
+        }
         
     } catch (error) {
         console.error('Erro no login:', error);
@@ -52,5 +59,11 @@ function logout() {
     localStorage.removeItem('userData');
     localStorage.removeItem('tempUserData');
     updateUserDisplay();
-    window.location.href = 'index.html';
+    
+    // Se estiver em página que requer login, redirecionar
+    if (window.location.pathname.includes('profile.html') || 
+        window.location.pathname.includes('checkout.html') ||
+        window.location.pathname.includes('admin.html')) {
+        window.location.href = 'index.html';
+    }
 }

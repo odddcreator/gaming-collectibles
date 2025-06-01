@@ -95,28 +95,39 @@ function viewProduct(productId) {
     window.location.href = `product.html?id=${productId}`;
 }
 
-function updateUserDisplay() {
-    const userDisplay = document.getElementById('userDisplay');
-    console.log('updateUserDisplay');
-    if (userDisplay) {
-        if (currentUser) {
-            userDisplay.textContent = currentUser.name || currentUser.email;
-            console.log('Logado'+currentUser.name);
-            userDisplay.onclick = () => window.location.href = 'profile.html';
-        } else {
-            userDisplay.textContent = 'User / Cadastro';
-            userDisplay.onclick = openLoginModal;
-            userDisplay.onclick = console.log('openLoginModal');
-        }
-    }
-}
-
+// Verificar sessão do usuário
 function checkUserSession() {
     const userData = localStorage.getItem('userData');
     if (userData) {
-        currentUser = JSON.parse(userData);
+        try {
+            currentUser = JSON.parse(userData);
+            console.log('Sessão do usuário carregada:', currentUser.email);
+            updateUserDisplay();
+        } catch (error) {
+            console.error('Erro ao carregar dados do usuário:', error);
+            localStorage.removeItem('userData');
+            currentUser = null;
+            updateUserDisplay();
+        }
+    } else {
+        currentUser = null;
         updateUserDisplay();
-        console.log('checkUserSession');
+    }
+}
+
+// Atualizar exibição do usuário
+function updateUserDisplay() {
+    const userDisplay = document.getElementById('userDisplay');
+    if (userDisplay) {
+        if (currentUser) {
+            userDisplay.textContent = currentUser.name || currentUser.email;
+            userDisplay.onclick = () => window.location.href = 'profile.html';
+            userDisplay.style.cursor = 'pointer';
+        } else {
+            userDisplay.textContent = 'User / Cadastro';
+            userDisplay.onclick = openLoginModal;
+            userDisplay.style.cursor = 'pointer';
+        }
     }
 }
 
