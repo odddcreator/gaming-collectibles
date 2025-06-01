@@ -34,7 +34,10 @@ const payment = new Payment(mercadopago);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+});
 
 // Configurar multer para upload de imagens
 const storage = multer.diskStorage({
@@ -66,6 +69,48 @@ const upload = multer({
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+
+// Users
+app.get('/api/users', async (req, res) => {
+    try {
+        const users = await User.find().select('-googleId');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/users/google/:googleId', async (req, res) => {
+    try {
+        const user = await User.findOne({ googleId: req.params.googleId });
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/users', async (req, res) => {
+    try {
+        const user = new User(req.body);
+        await user.save();
+        res.status(201).json(user);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+});
+
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(user);
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+    });
 
 // Configurações dos Correios (adicione no .env também)
 const CORREIOS_CONFIG = {
