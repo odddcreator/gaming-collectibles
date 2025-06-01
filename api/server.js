@@ -707,6 +707,40 @@ app.get('/api/webhook/status', (req, res) => {
     });
 });
 
+// Consultar status de pagamento
+app.get('/api/payment/status/:external_reference', async (req, res) => {
+    try {
+        const { external_reference } = req.params;
+        
+        const order = await Order.findOne({ external_reference });
+        
+        if (!order) {
+            return res.status(404).json({ error: 'Pedido não encontrado' });
+        }
+        
+        res.json({
+            order_number: order.orderNumber,
+            status: order.status,
+            payment_status: order.payment.status,
+            total: order.totals.total
+        });
+        
+    } catch (error) {
+        console.error('Erro ao consultar status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Função auxiliar para labels de tamanho
+function getSizeLabel(size) {
+    const labels = {
+        'small': '18cm (1:10)',
+        'medium': '22cm (1:8)', 
+        'large': '26cm (1:7)'
+    };
+    return labels[size] || size;
+}
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
