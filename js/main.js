@@ -97,13 +97,16 @@ function viewProduct(productId) {
 
 function updateUserDisplay() {
     const userDisplay = document.getElementById('userDisplay');
+    console.log('updateUserDisplay');
     if (userDisplay) {
         if (currentUser) {
             userDisplay.textContent = currentUser.name || currentUser.email;
+            console.log('Logado'+currentUser.name);
             userDisplay.onclick = () => window.location.href = 'profile.html';
         } else {
             userDisplay.textContent = 'User / Cadastro';
             userDisplay.onclick = openLoginModal;
+            userDisplay.onclick = console.log('openLoginModal');
         }
     }
 }
@@ -113,6 +116,7 @@ function checkUserSession() {
     if (userData) {
         currentUser = JSON.parse(userData);
         updateUserDisplay();
+        console.log('checkUserSession');
     }
 }
 
