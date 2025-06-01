@@ -528,152 +528,184 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
     }
 });
 
-// Webhook do Mercado Pago
+// Webhook do Mercado Pago - com logs mais detalhados
 app.post('/api/webhook/mercadopago', async (req, res) => {
     try {
-        console.log('Webhook recebido:', req.body);
+        console.log('=== WEBHOOK RECEBIDO ===');
+        console.log('Headers:', req.headers);
+        console.log('Body:', req.body);
+        console.log('Method:', req.method);
+        console.log('URL:', req.url);
         
         const { type, data, action } = req.body;
         
-        if (type === 'payment') {
-            const paymentId = data.id;
-            console.log('Processando pagamento:', paymentId);
-            
-            // Buscar dados do pagamento no Mercado Pago
-            const paymentData = await payment.get({ id: paymentId });
-            console.log('Dados do pagamento:', JSON.stringify(paymentData, null, 2));
-            
-            const externalReference = paymentData.external_reference;
-            
-            if (!externalReference) {
-                console.warn('External reference não encontrado no pagamento');
-                return res.status(200).send('OK');
-            }
-            
-            // Buscar pedido no banco
-            const order = await Order.findOne({ external_reference: externalReference });
-            
-            if (!order) {
-                console.warn('Pedido não encontrado:', externalReference);
-                return res.status(200).send('OK');
-            }
-            
-            console.log('Pedido encontrado:', order.orderNumber);
-            
-            // Atualizar status do pedido baseado no status do pagamento
-            let newOrderStatus = order.status;
-            let newPaymentStatus = paymentData.status;
-            
-            switch (paymentData.status) {
-                case 'approved':
-                    newOrderStatus = 'processing';
-                    newPaymentStatus = 'approved';
-                    console.log('Pagamento aprovado para pedido:', order.orderNumber);
-                    break;
-                    
-                case 'pending':
-                case 'in_process':
-                    newOrderStatus = 'pending_payment';
-                    newPaymentStatus = 'pending';
-                    console.log('Pagamento pendente para pedido:', order.orderNumber);
-                    break;
-                    
-                case 'rejected':
-                case 'cancelled':
-                    newOrderStatus = 'cancelled';
-                    newPaymentStatus = 'rejected';
-                    console.log('Pagamento rejeitado para pedido:', order.orderNumber);
-                    break;
-                    
-                default:
-                    console.log('Status de pagamento não reconhecido:', paymentData.status);
-            }
-            
-            // Atualizar pedido
-            const updatedOrder = await Order.findByIdAndUpdate(
-                order._id,
-                {
-                    status: newOrderStatus,
-                    'payment.status': newPaymentStatus,
-                    'payment.transactionId': paymentId,
-                    'payment.method': paymentData.payment_method_id,
-                    'payment.paidAt': paymentData.status === 'approved' ? new Date() : null,
-                    'payment.details': {
-                        installments: paymentData.installments,
-                        card_last_four_digits: paymentData.card?.last_four_digits,
-                        payment_type: paymentData.payment_type_id
-                    }
-                },
-                { new: true }
-            );
-            
-            console.log('Pedido atualizado:', updatedOrder.orderNumber, 'Status:', newOrderStatus);
-            
-            // Se aprovado, reduzir estoque dos produtos
-            if (paymentData.status === 'approved') {
-                for (const item of order.items) {
-                    await Product.findByIdAndUpdate(
-                        item.productId,
-                        { $inc: { stock: -item.quantity } }
-                    );
-                }
-                
-                // Atualizar estatísticas do usuário
-                await User.findByIdAndUpdate(
-                    order.customer.id,
-                    { 
-                        $inc: { 
-                            orderCount: 1,
-                            totalSpent: order.totals.total 
-                        }
-                    }
-                );
-                
-                console.log('Estoque atualizado e estatísticas do usuário atualizadas');
-            }
-        }
-        
+        // Responder rapidamente para evitar timeout
         res.status(200).send('OK');
         
-    } catch (error) {
-        console.error('Erro no webhook:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Consultar status de pagamento
-app.get('/api/payment/status/:external_reference', async (req, res) => {
-    try {
-        const { external_reference } = req.params;
-        
-        const order = await Order.findOne({ external_reference });
-        
-        if (!order) {
-            return res.status(404).json({ error: 'Pedido não encontrado' });
+        if (type === 'payment') {
+            const paymentId = data.id;
+            console.log('💳 Processando pagamento ID:', paymentId);
+            
+            // Aguardar um pouco antes de consultar (MP pode demorar para processar)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            try {
+                // Buscar dados do pagamento no Mercado Pago
+                const paymentData = await payment.get({ id: paymentId });
+                console.log('💰 Dados do pagamento:', JSON.stringify(paymentData, null, 2));
+                
+                const externalReference = paymentData.external_reference;
+                
+                if (!externalReference) {
+                    console.warn('⚠️ External reference não encontrado no pagamento');
+                    return;
+                }
+                
+                console.log('🔍 Buscando pedido com external_reference:', externalReference);
+                
+                // Buscar pedido no banco
+                const order = await Order.findOne({ external_reference: externalReference });
+                
+                if (!order) {
+                    console.warn('❌ Pedido não encontrado:', externalReference);
+                    
+                    // Listar todos os pedidos para debug
+                    const allOrders = await Order.find({}, 'orderNumber external_reference').limit(10);
+                    console.log('📋 Pedidos existentes:', allOrders);
+                    return;
+                }
+                
+                console.log('✅ Pedido encontrado:', order.orderNumber);
+                console.log('📊 Status atual do pedido:', order.status);
+                console.log('💳 Status do pagamento MP:', paymentData.status);
+                
+                // Atualizar status do pedido baseado no status do pagamento
+                let newOrderStatus = order.status;
+                let newPaymentStatus = paymentData.status;
+                
+                switch (paymentData.status) {
+                    case 'approved':
+                        newOrderStatus = 'processing';
+                        newPaymentStatus = 'approved';
+                        console.log('✅ Pagamento APROVADO para pedido:', order.orderNumber);
+                        break;
+                        
+                    case 'pending':
+                    case 'in_process':
+                        newOrderStatus = 'pending_payment';
+                        newPaymentStatus = 'pending';
+                        console.log('⏳ Pagamento PENDENTE para pedido:', order.orderNumber);
+                        break;
+                        
+                    case 'rejected':
+                    case 'cancelled':
+                        newOrderStatus = 'cancelled';
+                        newPaymentStatus = 'rejected';
+                        console.log('❌ Pagamento REJEITADO para pedido:', order.orderNumber);
+                        break;
+                        
+                    default:
+                        console.log('❓ Status de pagamento não reconhecido:', paymentData.status);
+                }
+                
+                // Atualizar pedido
+                const updatedOrder = await Order.findByIdAndUpdate(
+                    order._id,
+                    {
+                        status: newOrderStatus,
+                        'payment.status': newPaymentStatus,
+                        'payment.transactionId': paymentId,
+                        'payment.method': paymentData.payment_method_id,
+                        'payment.paidAt': paymentData.status === 'approved' ? new Date() : null,
+                        'payment.details': {
+                            installments: paymentData.installments,
+                            card_last_four_digits: paymentData.card?.last_four_digits,
+                            payment_type: paymentData.payment_type_id
+                        }
+                    },
+                    { new: true }
+                );
+                
+                console.log('🔄 Pedido atualizado:', updatedOrder.orderNumber, 'Novo status:', newOrderStatus);
+                
+                // Se aprovado, processar ações pós-pagamento
+                if (paymentData.status === 'approved') {
+                    console.log('🎉 Processando aprovação do pagamento...');
+                    
+                    // Reduzir estoque dos produtos
+                    for (const item of order.items) {
+                        const updatedProduct = await Product.findByIdAndUpdate(
+                            item.productId,
+                            { $inc: { stock: -item.quantity } },
+                            { new: true }
+                        );
+                        console.log(`📦 Estoque atualizado - Produto: ${item.name}, Novo estoque: ${updatedProduct?.stock}`);
+                    }
+                    
+                    // Atualizar estatísticas do usuário
+                    const updatedUser = await User.findByIdAndUpdate(
+                        order.customer.id,
+                        { 
+                            $inc: { 
+                                orderCount: 1,
+                                totalSpent: order.totals.total 
+                            }
+                        },
+                        { new: true }
+                    );
+                    
+                    console.log('👤 Estatísticas do usuário atualizadas:', {
+                        email: updatedUser?.email,
+                        orderCount: updatedUser?.orderCount,
+                        totalSpent: updatedUser?.totalSpent
+                    });
+                }
+                
+                console.log('=== WEBHOOK PROCESSADO COM SUCESSO ===');
+                
+            } catch (paymentError) {
+                console.error('❌ Erro ao processar dados do pagamento:', paymentError);
+            }
+        } else {
+            console.log('ℹ️ Tipo de webhook ignorado:', type);
         }
         
-        res.json({
-            order_number: order.orderNumber,
-            status: order.status,
-            payment_status: order.payment.status,
-            total: order.totals.total
-        });
-        
     } catch (error) {
-        console.error('Erro ao consultar status:', error);
+        console.error('💥 Erro geral no webhook:', error);
+        // Não retornar erro para evitar reenvios desnecessários
+    }
+});
+
+// Endpoint para testar webhook manualmente
+app.post('/api/webhook/test', async (req, res) => {
+    try {
+        console.log('🧪 TESTE DE WEBHOOK');
+        console.log('Body recebido:', req.body);
+        
+        // Simular processamento
+        const { payment_id, external_reference } = req.body;
+        
+        if (external_reference) {
+            const order = await Order.findOne({ external_reference });
+            console.log('Pedido encontrado:', order ? order.orderNumber : 'Não encontrado');
+        }
+        
+        res.json({ success: true, message: 'Teste realizado' });
+    } catch (error) {
+        console.error('Erro no teste:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// Função auxiliar para labels de tamanho
-function getSizeLabel(size) {
-    const labels = {
-        'small': '18cm (1:10)',
-        'medium': '22cm (1:8)', 
-        'large': '26cm (1:7)'
-    };
-    return labels[size] || size;
-}
+// Endpoint para verificar configuração do webhook
+app.get('/api/webhook/status', (req, res) => {
+    res.json({
+        webhook_url: `${process.env.API_URL}/api/webhook/mercadopago`,
+        api_url: process.env.API_URL,
+        frontend_url: process.env.FRONTEND_URL,
+        timestamp: new Date().toISOString()
+    });
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
