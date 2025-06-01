@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 require('dotenv').config();
 
 const app = express();
@@ -12,13 +13,28 @@ app.use(cors({
     origin: ['https://odddcreator.github.io', 'https://3dcutlabs.com.br', 'http://localhost:3000'],
     credentials: true
 }));
+
+// Para webhooks, usar raw body
+app.use('/api/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
 
-// Servir arquivos estáticos de uploads
+// Configurar MercadoPago
+const mercadopago = new MercadoPagoConfig({
+    accessToken: process.env.MP_ACCESS_TOKEN,
+    options: {
+        timeout: 5000,
+        idempotencyKey: 'abc123'
+    }
+});
+
+const preference = new Preference(mercadopago);
+const payment = new Payment(mercadopago);
+
+// Servir arquivos estáticos
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
+mongoose.connect(process.env.MONGODB_URI);
 
 // Configurar multer para upload de imagens
 const storage = multer.diskStorage({
@@ -50,6 +66,7 @@ const upload = multer({
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
+
 // Configurações dos Correios (adicione no .env também)
 const CORREIOS_CONFIG = {
     cepOrigem: process.env.CEP_ORIGEM || '01310-100', // CEP da sua empresa
@@ -360,21 +377,258 @@ app.patch('/api/orders/:id', async (req, res) => {
     }
 });
 
+// Criar preferência de pagamento
+app.post('/api/mercadopago/create-preference', async (req, res) => {
+    try {
+        const { orderData } = req.body;
+        
+        console.log('Criando preferência para pedido:', orderData);
+        
+        // Gerar external_reference único
+        const externalReference = `3DCUTLABS-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        
+        // Preparar itens para o Mercado Pago
+        const items = orderData.items.map(item => ({
+            id: item.productId,
+            title: `${item.name} - ${getSizeLabel(item.size)} - ${item.painting ? 'Com pintura' : 'Sem pintura'}`,
+            description: `Quantidade: ${item.quantity}`,
+            quantity: item.quantity,
+            unit_price: item.unitPrice,
+            currency_id: 'BRL'
+        }));
+        
+        // Adicionar frete como item separado
+        if (orderData.shipping.cost > 0) {
+            items.push({
+                id: 'shipping',
+                title: `Frete - ${orderData.shipping.method}`,
+                description: `Entrega em ${orderData.shipping.deliveryTime} dias úteis`,
+                quantity: 1,
+                unit_price: orderData.shipping.cost,
+                currency_id: 'BRL'
+            });
+        }
+        
+        const preferenceData = {
+            items: items,
+            payer: {
+                name: orderData.customer.name,
+                email: orderData.customer.email,
+                phone: {
+                    area_code: orderData.customer.phone.substring(1, 3),
+                    number: orderData.customer.phone.substring(3).replace(/\D/g, '')
+                },
+                address: {
+                    street_name: orderData.shipping.address.street,
+                    street_number: parseInt(orderData.shipping.address.number) || 0,
+                    zip_code: orderData.shipping.address.zipCode.replace(/\D/g, '')
+                }
+            },
+            back_urls: {
+                success: `${process.env.FRONTEND_URL}/success.html`,
+                failure: `${process.env.FRONTEND_URL}/failure.html`,
+                pending: `${process.env.FRONTEND_URL}/pending.html`
+            },
+            auto_return: 'approved',
+            external_reference: externalReference,
+            notification_url: `${process.env.API_URL}/api/webhook/mercadopago`,
+            statement_descriptor: '3D CUTLABS',
+            expires: true,
+            expiration_date_from: new Date().toISOString(),
+            expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 horas
+            metadata: {
+                customer_id: orderData.customer.id,
+                order_items_count: orderData.items.length,
+                shipping_method: orderData.shipping.method
+            }
+        };
+        
+        console.log('Dados da preferência:', JSON.stringify(preferenceData, null, 2));
+        
+        const result = await preference.create({ body: preferenceData });
+        
+        console.log('Preferência criada:', result.id);
+        
+        // Salvar pedido temporário no banco com status 'pending_payment'
+        const orderToSave = {
+            ...orderData,
+            external_reference: externalReference,
+            mercadopago_preference_id: result.id,
+            status: 'pending_payment',
+            payment: {
+                status: 'pending',
+                method: 'mercadopago'
+            }
+        };
+        
+        const order = new Order(orderToSave);
+        await order.save();
+        
+        console.log('Pedido temporário salvo:', order.orderNumber);
+        
+        res.json({
+            preference_id: result.id,
+            init_point: result.init_point,
+            sandbox_init_point: result.sandbox_init_point,
+            external_reference: externalReference,
+            order_id: order._id
+        });
+        
+    } catch (error) {
+        console.error('Erro ao criar preferência:', error);
+        res.status(500).json({ 
+            error: 'Erro ao criar preferência de pagamento',
+            details: error.message 
+        });
+    }
+});
+
 // Webhook do Mercado Pago
 app.post('/api/webhook/mercadopago', async (req, res) => {
     try {
-        const { type, data } = req.body;
+        console.log('Webhook recebido:', req.body);
+        
+        const { type, data, action } = req.body;
         
         if (type === 'payment') {
-            // Processar pagamento
-            // Implementar lógica específica do Mercado Pago
+            const paymentId = data.id;
+            console.log('Processando pagamento:', paymentId);
+            
+            // Buscar dados do pagamento no Mercado Pago
+            const paymentData = await payment.get({ id: paymentId });
+            console.log('Dados do pagamento:', JSON.stringify(paymentData, null, 2));
+            
+            const externalReference = paymentData.external_reference;
+            
+            if (!externalReference) {
+                console.warn('External reference não encontrado no pagamento');
+                return res.status(200).send('OK');
+            }
+            
+            // Buscar pedido no banco
+            const order = await Order.findOne({ external_reference: externalReference });
+            
+            if (!order) {
+                console.warn('Pedido não encontrado:', externalReference);
+                return res.status(200).send('OK');
+            }
+            
+            console.log('Pedido encontrado:', order.orderNumber);
+            
+            // Atualizar status do pedido baseado no status do pagamento
+            let newOrderStatus = order.status;
+            let newPaymentStatus = paymentData.status;
+            
+            switch (paymentData.status) {
+                case 'approved':
+                    newOrderStatus = 'processing';
+                    newPaymentStatus = 'approved';
+                    console.log('Pagamento aprovado para pedido:', order.orderNumber);
+                    break;
+                    
+                case 'pending':
+                case 'in_process':
+                    newOrderStatus = 'pending_payment';
+                    newPaymentStatus = 'pending';
+                    console.log('Pagamento pendente para pedido:', order.orderNumber);
+                    break;
+                    
+                case 'rejected':
+                case 'cancelled':
+                    newOrderStatus = 'cancelled';
+                    newPaymentStatus = 'rejected';
+                    console.log('Pagamento rejeitado para pedido:', order.orderNumber);
+                    break;
+                    
+                default:
+                    console.log('Status de pagamento não reconhecido:', paymentData.status);
+            }
+            
+            // Atualizar pedido
+            const updatedOrder = await Order.findByIdAndUpdate(
+                order._id,
+                {
+                    status: newOrderStatus,
+                    'payment.status': newPaymentStatus,
+                    'payment.transactionId': paymentId,
+                    'payment.method': paymentData.payment_method_id,
+                    'payment.paidAt': paymentData.status === 'approved' ? new Date() : null,
+                    'payment.details': {
+                        installments: paymentData.installments,
+                        card_last_four_digits: paymentData.card?.last_four_digits,
+                        payment_type: paymentData.payment_type_id
+                    }
+                },
+                { new: true }
+            );
+            
+            console.log('Pedido atualizado:', updatedOrder.orderNumber, 'Status:', newOrderStatus);
+            
+            // Se aprovado, reduzir estoque dos produtos
+            if (paymentData.status === 'approved') {
+                for (const item of order.items) {
+                    await Product.findByIdAndUpdate(
+                        item.productId,
+                        { $inc: { stock: -item.quantity } }
+                    );
+                }
+                
+                // Atualizar estatísticas do usuário
+                await User.findByIdAndUpdate(
+                    order.customer.id,
+                    { 
+                        $inc: { 
+                            orderCount: 1,
+                            totalSpent: order.totals.total 
+                        }
+                    }
+                );
+                
+                console.log('Estoque atualizado e estatísticas do usuário atualizadas');
+            }
         }
         
         res.status(200).send('OK');
+        
     } catch (error) {
+        console.error('Erro no webhook:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+// Consultar status de pagamento
+app.get('/api/payment/status/:external_reference', async (req, res) => {
+    try {
+        const { external_reference } = req.params;
+        
+        const order = await Order.findOne({ external_reference });
+        
+        if (!order) {
+            return res.status(404).json({ error: 'Pedido não encontrado' });
+        }
+        
+        res.json({
+            order_number: order.orderNumber,
+            status: order.status,
+            payment_status: order.payment.status,
+            total: order.totals.total
+        });
+        
+    } catch (error) {
+        console.error('Erro ao consultar status:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Função auxiliar para labels de tamanho
+function getSizeLabel(size) {
+    const labels = {
+        'small': '18cm (1:10)',
+        'medium': '22cm (1:8)', 
+        'large': '26cm (1:7)'
+    };
+    return labels[size] || size;
+}
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
