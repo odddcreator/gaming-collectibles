@@ -428,6 +428,8 @@ function editShipping() {
 
 async function initializePayment() {
     try {
+        console.log('Inicializando pagamento...');
+        
         // Preparar dados do pedido
         const subtotal = cart.reduce((sum, item) => sum + (item.finalPrice * item.quantity), 0);
         const shippingCost = selectedShippingMethod.price;
@@ -470,76 +472,105 @@ async function initializePayment() {
             }
         };
         
-        // Criar preferência do Mercado Pago
-        const preference = {
-            items: [{
-                id: 'order-' + Date.now(),
-                title: `Pedido 3D CutLabs - ${cart.length} item(s)`,
-                quantity: 1,
-                unit_price: total
-            }],
-            payer: {
-                name: shippingData.fullName,
-                email: currentUser.email,
-                phone: {
-                    number: shippingData.phone
-                }
+        console.log('Dados do pedido preparados:', orderData);
+        
+        // Criar preferência no backend
+        const response = await fetch(`${API_BASE_URL}/api/mercadopago/create-preference`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
             },
-            back_urls: {
-                success: `${window.location.origin}/success.html`,
-                failure: `${window.location.origin}/failure.html`,
-                pending: `${window.location.origin}/pending.html`
-            },
-            auto_return: 'approved',
-            external_reference: 'order-' + Date.now()
-        };
+            body: JSON.stringify({ orderData })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Erro na API: ${errorData.error} - ${errorData.details}`);
+        }
+        
+        const preferenceData = await response.json();
+        console.log('Preferência criada:', preferenceData);
+        
+        // Salvar dados para consulta posterior
+        sessionStorage.setItem('currentOrder', JSON.stringify({
+            external_reference: preferenceData.external_reference,
+            order_id: preferenceData.order_id
+        }));
         
         // Criar checkout do Mercado Pago
+        if (!mp) {
+            throw new Error('SDK do Mercado Pago não carregado');
+        }
+        
         const checkout = mp.checkout({
-            preference: preference
+            preference: {
+                id: preferenceData.preference_id
+            },
+            render: {
+                container: '#mercadopagoContainer',
+                label: 'Finalizar Compra'
+            }
         });
         
-        // Renderizar checkout
-        checkout.render({
-            container: '#mercadopagoContainer',
-            label: 'Finalizar Compra'
+        console.log('Checkout renderizado');
+        
+        // Adicionar listener para erros do checkout
+        checkout.on('error', (error) => {
+            console.error('Erro no checkout:', error);
+            alert('Erro no checkout. Tente novamente.');
         });
+        
+        // Monitorar mudanças na janela para detectar retorno do pagamento
+        window.addEventListener('focus', checkPaymentStatus);
         
     } catch (error) {
         console.error('Erro ao inicializar pagamento:', error);
-        alert('Erro ao processar pagamento. Tente novamente.');
+        
+        // Mostrar erro detalhado para o usuário
+        const container = document.getElementById('mercadopagoContainer');
+        container.innerHTML = `
+            <div style="padding: 2rem; text-align: center; border: 1px solid #ef4444; border-radius: 8px; background: #fef2f2;">
+                <h3 style="color: #dc2626; margin-bottom: 1rem;">Erro ao processar pagamento</h3>
+                <p style="color: #991b1b; margin-bottom: 1rem;">${error.message}</p>
+                <button onclick="initializePayment()" class="btn btn-primary">Tentar Novamente</button>
+                <button onclick="previousStep()" class="btn btn-secondary" style="margin-left: 1rem;">Voltar</button>
+            </div>
+        `;
     }
 }
 
-// Função para processar o pedido após o pagamento
-async function processOrder(paymentData) {
+// Função para verificar status do pagamento após retorno
+async function checkPaymentStatus() {
+    const orderData = sessionStorage.getItem('currentOrder');
+    if (!orderData) return;
+    
     try {
-        const response = await fetch(`${API_BASE_URL}/api/orders`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${currentUser.token}`
-            },
-            body: JSON.stringify({
-                ...orderData,
-                payment: paymentData
-            })
-        });
+        const order = JSON.parse(orderData);
+        
+        const response = await fetch(`${API_BASE_URL}/api/payment/status/${order.external_reference}`);
         
         if (response.ok) {
-            const order = await response.json();
+            const status = await response.json();
             
-            // Limpar carrinho
-            cart = [];
-            saveCart();
-            
-            // Redirecionar para página de sucesso
-            window.location.href = `success.html?order=${order._id}`;
-        } else {
-            throw new Error('Erro ao processar pedido');
+            if (status.payment_status === 'approved') {
+                // Limpar dados temporários
+                sessionStorage.removeItem('currentOrder');
+                localStorage.removeItem('cart');
+                
+                // Redirecionar para sucesso
+                window.location.href = `success.html?order=${status.order_number}`;
+            } else if (status.payment_status === 'rejected') {
+                // Redirecionar para falha
+                window.location.href = 'failure.html';
+            }
+            // Se pending, não fazer nada (continuar esperando)
         }
     } catch (error) {
-        console.error('Erro ao processar pedido:', error);
-        alert('Erro ao processar pedido. Entre em contato conosco.');
+        console.error('Erro ao verificar status:', error);
     }
 }
+
+// Remover listener quando sair da página
+window.addEventListener('beforeunload', () => {
+    window.removeEventListener('focus', checkPaymentStatus);
+});

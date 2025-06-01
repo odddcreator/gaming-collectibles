@@ -123,5 +123,39 @@
         // Limpar carrinho
         localStorage.removeItem('cart');
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obter número do pedido da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const orderNumber = urlParams.get('order');
+            
+            if (orderNumber) {
+                document.getElementById('orderNumber').textContent = orderNumber;
+                
+                // Buscar mais detalhes do pedido se necessário
+                loadOrderDetails(orderNumber);
+            } else {
+                document.getElementById('orderNumber').textContent = 'Não disponível';
+            }
+            
+            // Limpar dados temporários
+            sessionStorage.removeItem('currentOrder');
+            localStorage.removeItem('cart');
+        });
+        
+        async function loadOrderDetails(orderNumber) {
+            try {
+                // Se quiser mostrar mais detalhes do pedido
+                const response = await fetch(`${API_BASE_URL}/api/orders/number/${orderNumber}`);
+                if (response.ok) {
+                    const order = await response.json();
+                    // Atualizar página com detalhes do pedido
+                    console.log('Detalhes do pedido:', order);
+                }
+            } catch (error) {
+                console.error('Erro ao carregar detalhes:', error);
+            }
+        }
+        </script>
 </body>
 </html>
