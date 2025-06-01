@@ -8,26 +8,43 @@ require('dotenv').config();
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+    origin: ['https://odddcreator.github.io', 'https://3dcutlabs.com.br', 'http://localhost:3000'],
+    credentials: true
+}));
 app.use(express.json());
-app.use('uploads/', express.static('uploads'));
+
+// Servir arquivos estáticos de uploads
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Conectar ao MongoDB
-mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
 
 // Configurar multer para upload de imagens
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'uploads/')
+        cb(null, 'uploads/') // Relativo ao server.js
     },
     filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname))
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
     }
 });
-const upload = multer({ storage: storage });
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB
+    },
+    fileFilter: function (req, file, cb) {
+        // Verificar se é imagem
+        if (file.mimetype.startsWith('image/')) {
+            cb(null, true);
+        } else {
+            cb(new Error('Apenas imagens são permitidas!'), false);
+        }
+    }
+});
 
 // Models
 const User = require('./models/User');
@@ -36,46 +53,16 @@ const Order = require('./models/Order');
 
 // Routes
 
-// Users
-app.get('/api/users', async (req, res) => {
-    try {
-        const users = await User.find().select('-googleId');
-        res.json(users);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.get('/api/users/google/:googleId', async (req, res) => {
-    try {
-        const user = await User.findOne({ googleId: req.params.googleId });
-        if (user) {
-            res.json(user);
-        } else {
-            res.status(404).json({ message: 'User not found' });
+// Endpoint específico para servir imagens (com headers corretos)
+app.get('/api/image/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(__dirname, 'uploads', filename);
+    
+    res.sendFile(filepath, (err) => {
+        if (err) {
+            res.status(404).json({ error: 'Imagem não encontrada' });
         }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/users', async (req, res) => {
-    try {
-        const user = new User(req.body);
-        await user.save();
-        res.status(201).json(user);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-});
-
-app.put('/api/users/:id', async (req, res) => {
-    try {
-        const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        res.json(user);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
+    });
 });
 
 // Products
@@ -105,15 +92,18 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
     try {
         const productData = req.body;
         
-        // Processar imagens
-        if (req.files) {
-            productData.images = req.files.map(file => `uploads/${file.filename}`);
+        // Processar imagens com URL completa do backend
+        if (req.files && req.files.length > 0) {
+            productData.images = req.files.map(file => 
+                `${process.env.API_URL || 'https://gaming-collectibles-api.onrender.com'}/uploads/${file.filename}`
+            );
         }
         
         const product = new Product(productData);
         await product.save();
         res.status(201).json(product);
     } catch (error) {
+        console.error('Erro ao criar produto:', error);
         res.status(400).json({ error: error.message });
     }
 });
@@ -205,4 +195,5 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Uploads será servido em: ${process.env.API_URL || 'https://gaming-collectibles-api.onrender.com'}/uploads/`);
 });

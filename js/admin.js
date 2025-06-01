@@ -237,10 +237,12 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
     try {
         const response = await fetch(`${API_BASE_URL}/api/products`, {
             method: 'POST',
-            body: formData
+            body: formData // FormData já inclui as imagens
         });
         
         if (response.ok) {
+            const product = await response.json();
+            console.log('Produto criado com imagens:', product.images);
             alert('Produto adicionado com sucesso!');
             closeAddProductForm();
             loadProducts();
