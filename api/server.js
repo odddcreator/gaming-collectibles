@@ -10,7 +10,7 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
+app.use('api/uploads', express.static('uploads'));
 
 // Conectar ao MongoDB
 mongoose.connect(process.env.MONGODB_URI || 'mongodb+srv://odddcreator:o0bCPxyCJtCE5s2z@cluster0.tswkhko.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0', {
