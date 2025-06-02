@@ -60,6 +60,8 @@ function initializeCheckout() {
     loadUserData();
     updateOrderSidebar();
     updateSummary();
+    calculateShipping();
+    calculateShippingOptions();
 }
 
 function loadUserData() {
