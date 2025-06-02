@@ -84,6 +84,7 @@ function nextStep() {
         if (validateShippingForm()) {
             collectShippingData();
             calculateShipping();
+            updateOrderReview();
             showStep(2);
         }
     } else if (currentStep === 2) {
