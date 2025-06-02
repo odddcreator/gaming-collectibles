@@ -76,8 +76,30 @@ const orderSchema = new mongoose.Schema({
 // Gerar número do pedido automaticamente
 orderSchema.pre('save', async function(next) {
     if (this.isNew && !this.orderNumber) {
-        const count = await mongoose.model('Order').countDocuments();
-        this.orderNumber = `3DC${String(count + 1).padStart(6, '0')}`;
+        let orderNumber;
+        let isUnique = false;
+        let attempts = 0;
+        
+        while (!isUnique && attempts < 10) {
+            // Gerar número baseado em timestamp + random
+            const timestamp = Date.now().toString().slice(-6); // Últimos 6 dígitos do timestamp
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            orderNumber = `3DC${timestamp}${random}`;
+            
+            // Verificar se já existe
+            const existing = await mongoose.model('Order').findOne({ orderNumber });
+            if (!existing) {
+                isUnique = true;
+            }
+            attempts++;
+        }
+        
+        if (!isUnique) {
+            // Fallback: usar ObjectId como base
+            orderNumber = `3DC${this._id.toString().slice(-9).toUpperCase()}`;
+        }
+        
+        this.orderNumber = orderNumber;
     }
     next();
 });

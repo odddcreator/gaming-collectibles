@@ -430,7 +430,7 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
         console.log('Criando preferência para pedido:', orderData);
         
         // Gerar external_reference único
-        const externalReference = `3DCUTLABS-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const externalReference = `3DCUTLABS-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.floor(Math.random() * 10000)}`;
         
         // Preparar itens para o Mercado Pago
         const items = orderData.items.map(item => ({
