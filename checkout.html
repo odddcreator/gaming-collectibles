@@ -121,7 +121,7 @@
                         <div class="review-section">
                             <h3>Endereço de Entrega</h3>
                             <div id="shippingAddressReview"></div>
-                            <button class="btn-link" onload="updateOrderReview()" onclick="editShipping()">Editar</button>
+                            <button class="btn-link" onclick="editShipping()">Editar</button>
                         </div>
                         
                         <div class="review-section">
@@ -149,7 +149,7 @@
                         
                         <div class="step-actions">
                             <button class="btn btn-secondary" onclick="previousStep()">Voltar</button>
-                            <button class="btn btn-primary" onclick="nextStep()">Ir para Pagamento</button>
+                            <button class="btn btn-primary" onload="updateOrderReview()" onclick="nextStep()">Ir para Pagamento</button>
                         </div>
                     </div>
                 </div>
