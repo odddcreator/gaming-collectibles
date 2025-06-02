@@ -97,13 +97,13 @@
                             <button class="btn btn-primary" onclick="showAddAddressForm()">Adicionar Endereço</button>
                         </div>
                         
-                        <div id="addressesList" class="addresses-list">
+                        <div id="addressesList" class="addresses-list" onload="displayAddresses()">
                             <!-- Endereços serão carregados aqui -->
                         </div>
                     </div>
                     
                     <!-- Orders Section -->
-                    <div id="orders" class="profile-section">
+                    <div id="orders" class="profile-section" onload="displayOrders()">
                         <h2>Meus Pedidos</h2>
                         <div id="ordersList" class="orders-list">
                             <!-- Pedidos serão carregados aqui -->
