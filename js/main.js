@@ -73,28 +73,12 @@ function loadFeaturedProducts() {
 
     featuredContainer.innerHTML = featuredProducts.map(product => `
         <div class="product-card" onclick="viewProduct('${product._id}')">
-            ${product.featured ? '<div class="product-badge featured">Destaque</div>' : ''}
             <div class="product-image">
-                <img src="${product.images[0] || 'assets/placeholder.jpg'}" 
-                     alt="${product.name}" 
-                     loading="lazy">
-                <div class="stock-indicator ${stockStatus.class}">
-                    ${stockStatus.label}
-                </div>
+                <img src="${product.images[0] || 'assets/placeholder.jpg'}" alt="${product.name}">
             </div>
             <div class="product-info">
-                <div class="product-game">${product.game}</div>
                 <h3 class="product-name">${product.name}</h3>
-                <div class="product-price">R$ ${formatPrice(product.basePrice)}</div>
-                <div class="price-range">${priceRange}</div>
-                <div class="product-actions">
-                    <button class="btn-quick-add" onclick="event.stopPropagation(); openQuickAdd('${product._id}')">
-                        Adicionar
-                    </button>
-                    <button class="btn-view" onclick="event.stopPropagation(); viewProduct('${product._id}')">
-                        Ver
-                    </button>
-                </div>
+                <p class="product-price">R$ ${formatPrice(product.basePrice)}</p>
             </div>
         </div>
     `).join('');
