@@ -96,6 +96,7 @@ async function loadUserAddresses() {
 }
 
 function displayAddresses() {
+    console.log("displayadresses triggered");
     const container = document.getElementById('addressesList');
     
     if (userAddresses.length === 0) {
