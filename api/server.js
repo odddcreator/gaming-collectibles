@@ -427,10 +427,12 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
     try {
         const { orderData } = req.body;
         
-        console.log('Criando preferência para pedido:', orderData);
+        console.log('🛍️ Criando preferência para pedido:', orderData);
         
         // Gerar external_reference único
         const externalReference = `3DCUTLABS-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.floor(Math.random() * 10000)}`;
+        
+        console.log('🔗 External reference gerado:', externalReference);
         
         // Preparar itens para o Mercado Pago
         const items = orderData.items.map(item => ({
@@ -494,7 +496,7 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
         
         console.log('Preferência criada:', result.id);
         
-        // Salvar pedido temporário no banco com status 'pending_payment'
+        // Preparar dados do pedido
         const orderToSave = {
             ...orderData,
             external_reference: externalReference,
@@ -506,10 +508,32 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
             }
         };
         
-        const order = new Order(orderToSave);
-        await order.save();
+        console.log('💾 Salvando pedido:', {
+            external_reference: orderToSave.external_reference,
+            customer: orderToSave.customer.email,
+            total: orderToSave.totals.total
+        });
         
-        console.log('Pedido temporário salvo:', order.orderNumber);
+        // ✅ Adicionar try-catch específico para salvar order
+        let order;
+        try {
+            order = new Order(orderToSave);
+            await order.save();
+            console.log('✅ Pedido salvo com orderNumber:', order.orderNumber);
+        } catch (saveError) {
+            console.error('❌ Erro ao salvar pedido:', saveError);
+            
+            // Se for erro de duplicate key, tentar novamente com dados diferentes
+            if (saveError.code === 11000) {
+                console.log('🔄 Tentando salvar novamente...');
+                orderToSave.external_reference = `${externalReference}-RETRY-${Date.now()}`;
+                order = new Order(orderToSave);
+                await order.save();
+                console.log('✅ Pedido salvo na segunda tentativa:', order.orderNumber);
+            } else {
+                throw saveError;
+            }
+        }
         
         res.json({
             preference_id: result.id,
@@ -520,7 +544,7 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Erro ao criar preferência:', error);
+        console.error('💥 Erro ao criar preferência:', error);
         res.status(500).json({ 
             error: 'Erro ao criar preferência de pagamento',
             details: error.message 
