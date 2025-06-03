@@ -268,7 +268,10 @@ th {
         background-color: #e0e7ff;
         color: #3730a3;
     }
-    
+    .status-approved {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
     .status-processing {
         background-color: #dbeafe;
         color: #1e40af;
