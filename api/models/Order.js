@@ -1,9 +1,10 @@
+// models/Order.js - CORRIGIR o erro de duplicate key
 const mongoose = require('mongoose');
 
 const orderItemSchema = new mongoose.Schema({
     productId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true },
     name: String,
-    size: { type: String, enum: ['small', 'medium', 'large'] },
+    size: { type: String },  // ✅ Remover enum para aceitar tamanhos de stencils
     painting: Boolean,
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
@@ -11,15 +12,15 @@ const orderItemSchema = new mongoose.Schema({
 });
 
 const orderSchema = new mongoose.Schema({
-    orderNumber: { type: String, unique: true },
+    orderNumber: { type: String, unique: true }, // ✅ Manter apenas este como unique
     external_reference: { 
         type: String, 
         unique: true, 
-        sparse: true // ✅ Permite valores null sem conflito
+        sparse: true
     },
     mercadopago_preference_id: { 
         type: String, 
-        sparse: true // ✅ Permite valores null
+        sparse: true
     },
     customer: {
         id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -48,7 +49,7 @@ const orderSchema = new mongoose.Schema({
         transactionId: String,
         status: { 
             type: String, 
-            enum: ['pending', 'approved', 'rejected', 'cancelled'],
+            enum: ['pending', 'approved', 'rejected', 'cancelled'], // ✅ Adicionar 'approved'
             default: 'pending'
         },
         paidAt: Date,
@@ -65,7 +66,7 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending_payment', 'pending', 'processing', 'shipped', 'completed', 'cancelled'],
+        enum: ['pending_payment', 'pending', 'approved', 'processing', 'shipped', 'completed', 'cancelled'], // ✅ Adicionar 'approved'
         default: 'pending_payment'
     },
     notes: String
@@ -73,18 +74,18 @@ const orderSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Gerar número do pedido automaticamente
+// ✅ MELHORAR geração do orderNumber
 orderSchema.pre('save', async function(next) {
     if (this.isNew && !this.orderNumber) {
         let orderNumber;
         let isUnique = false;
         let attempts = 0;
         
-        while (!isUnique && attempts < 10) {
-            // Gerar número baseado em timestamp + random
-            const timestamp = Date.now().toString().slice(-6); // Últimos 6 dígitos do timestamp
-            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            orderNumber = `3DC${timestamp}${random}`;
+        while (!isUnique && attempts < 20) { // Aumentar tentativas
+            // Gerar número mais único
+            const timestamp = Date.now().toString();
+            const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+            orderNumber = `3DC${timestamp.slice(-8)}${random}`;
             
             // Verificar se já existe
             const existing = await mongoose.model('Order').findOne({ orderNumber });
@@ -95,8 +96,8 @@ orderSchema.pre('save', async function(next) {
         }
         
         if (!isUnique) {
-            // Fallback: usar ObjectId como base
-            orderNumber = `3DC${this._id.toString().slice(-9).toUpperCase()}`;
+            // Fallback mais robusto
+            orderNumber = `3DC${this._id.toString().slice(-8).toUpperCase()}${Date.now().toString().slice(-4)}`;
         }
         
         this.orderNumber = orderNumber;

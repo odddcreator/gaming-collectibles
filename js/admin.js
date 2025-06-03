@@ -142,6 +142,7 @@ async function loadProducts() {
     }
 }
 
+// Em admin.js, atualizar a função loadOrders
 async function loadOrders() {
     try {
         const response = await fetch(`${API_BASE_URL}/api/orders`);
@@ -150,7 +151,7 @@ async function loadOrders() {
         const tbody = document.getElementById('ordersTableBody');
         tbody.innerHTML = orders.map(order => `
             <tr>
-                <td>#${order._id.slice(-6)}</td>
+                <td>#${order.orderNumber || order._id.slice(-6)}</td>
                 <td>${order.customer.name}</td>
                 <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
                 <td>R$ ${formatPrice(order.totals.total)}</td>
@@ -164,6 +165,7 @@ async function loadOrders() {
                     <select onchange="updateOrderStatus('${order._id}', this.value)">
                         <option value="pending_payment" ${order.status === 'pending_payment' ? 'selected' : ''}>Aguardando Pagamento</option>
                         <option value="pending" ${order.status === 'pending' ? 'selected' : ''}>Pendente</option>
+                        <option value="approved" ${order.status === 'approved' ? 'selected' : ''}>Aprovado</option>
                         <option value="processing" ${order.status === 'processing' ? 'selected' : ''}>Processando</option>
                         <option value="shipped" ${order.status === 'shipped' ? 'selected' : ''}>Enviado</option>
                         <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>Concluído</option>
@@ -176,6 +178,19 @@ async function loadOrders() {
     } catch (error) {
         console.error('Erro ao carregar pedidos:', error);
     }
+}
+
+function getStatusLabel(status) {
+    const labels = {
+        'pending_payment': 'Aguardando Pagamento',
+        'pending': 'Pendente',
+        'approved': 'Aprovado', // ✅ Adicionar
+        'processing': 'Processando',
+        'shipped': 'Enviado',
+        'completed': 'Concluído',
+        'cancelled': 'Cancelado'
+    };
+    return labels[status] || status;
 }
 
 async function loadUsers() {
@@ -229,21 +244,71 @@ document.getElementById('productImages').addEventListener('change', function(e) 
     }
 });
 
-// Handle form submission
+// Adicionar no admin.js
+function toggleProductOptions() {
+    const category = document.getElementById('productCategory').value;
+    const paintingGroup = document.getElementById('paintingOptionGroup');
+    const sizesContainer = document.getElementById('sizesContainer');
+    const hasPaintingCheckbox = document.getElementById('hasPaintingOption');
+    
+    if (category === 'stencil') {
+        // Stencils não têm pintura
+        hasPaintingCheckbox.checked = false;
+        paintingGroup.style.display = 'none';
+        
+        // Tamanhos para stencils
+        sizesContainer.innerHTML = `
+            <div class="sizes-grid">
+                <label><input type="checkbox" name="availableSizes" value="30cm" checked> 30cm (x1)</label>
+                <label><input type="checkbox" name="availableSizes" value="60cm" checked> 60cm (x2)</label>
+                <label><input type="checkbox" name="availableSizes" value="90cm" checked> 90cm (x3)</label>
+                <label><input type="checkbox" name="availableSizes" value="120cm" checked> 120cm (x4)</label>
+                <label><input type="checkbox" name="availableSizes" value="180cm" checked> 180cm (x5)</label>
+            </div>
+        `;
+    } else {
+        // Action figures têm pintura
+        hasPaintingCheckbox.checked = true;
+        paintingGroup.style.display = 'block';
+        
+        // Tamanhos para action figures
+        sizesContainer.innerHTML = `
+            <div class="sizes-grid">
+                <label><input type="checkbox" name="availableSizes" value="small" checked> 18cm (1:10)</label>
+                <label><input type="checkbox" name="availableSizes" value="medium" checked> 22cm (1:8)</label>
+                <label><input type="checkbox" name="availableSizes" value="large" checked> 26cm (1:7)</label>
+            </div>
+        `;
+    }
+}
+
+// Atualizar o form handler
 document.getElementById('addProductForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
     
+    // ✅ Processar tamanhos selecionados
+    const availableSizes = [];
+    const sizeInputs = document.querySelectorAll('input[name="availableSizes"]:checked');
+    sizeInputs.forEach(input => availableSizes.push(input.value));
+    
+    // Remover os checkboxes individuais do FormData
+    formData.delete('availableSizes');
+    
+    // Adicionar como array
+    formData.append('availableSizes', JSON.stringify(availableSizes));
+    formData.append('hasPaintingOption', document.getElementById('hasPaintingOption').checked);
+    
     try {
         const response = await fetch(`${API_BASE_URL}/api/products`, {
             method: 'POST',
-            body: formData // FormData já inclui as imagens
+            body: formData
         });
         
         if (response.ok) {
             const product = await response.json();
-            console.log('Produto criado com imagens:', product.images);
+            console.log('Produto criado:', product);
             alert('Produto adicionado com sucesso!');
             closeAddProductForm();
             loadProducts();
@@ -256,6 +321,11 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         console.error('Erro ao adicionar produto:', error);
         alert('Erro ao adicionar produto');
     }
+});
+
+// Chamar função ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+    toggleProductOptions();
 });
 
 async function deleteProduct(productId) {
@@ -299,18 +369,6 @@ async function updateOrderStatus(orderId, newStatus) {
         console.error('Erro ao atualizar status:', error);
         alert('Erro ao atualizar status');
     }
-}
-
-function getStatusLabel(status) {
-    const labels = {
-        'pending_payment': 'Aguardando Pagamento', // ✅ Novo status
-        'pending': 'Pendente',
-        'processing': 'Processando',
-        'shipped': 'Enviado',
-        'completed': 'Concluído',
-        'cancelled': 'Cancelado'
-    };
-    return labels[status] || status;
 }
 
 function editProduct(productId) {

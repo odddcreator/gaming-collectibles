@@ -288,4 +288,29 @@ th {
         background-color: #fee2e2;
         color: #991b1b;
     }
+    .sizes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+    
+    .sizes-grid label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .sizes-grid label:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .sizes-grid input[type="checkbox"] {
+        margin: 0;
+    }
 }

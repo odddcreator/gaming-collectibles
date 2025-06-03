@@ -528,14 +528,12 @@ app.post('/api/mercadopago/create-preference', async (req, res) => {
     }
 });
 
-// Webhook do Mercado Pago - com logs mais detalhados
+// Webhook do Mercado Pago - MELHORADO
 app.post('/api/webhook/mercadopago', async (req, res) => {
     try {
         console.log('=== WEBHOOK RECEBIDO ===');
         console.log('Headers:', req.headers);
         console.log('Body:', req.body);
-        console.log('Method:', req.method);
-        console.log('URL:', req.url);
         
         const { type, data, action } = req.body;
         
@@ -546,8 +544,8 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
             const paymentId = data.id;
             console.log('💳 Processando pagamento ID:', paymentId);
             
-            // Aguardar um pouco antes de consultar (MP pode demorar para processar)
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Aguardar um pouco antes de consultar
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
             try {
                 // Buscar dados do pagamento no Mercado Pago
@@ -568,10 +566,6 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
                 
                 if (!order) {
                     console.warn('❌ Pedido não encontrado:', externalReference);
-                    
-                    // Listar todos os pedidos para debug
-                    const allOrders = await Order.find({}, 'orderNumber external_reference').limit(10);
-                    console.log('📋 Pedidos existentes:', allOrders);
                     return;
                 }
                 
@@ -579,13 +573,13 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
                 console.log('📊 Status atual do pedido:', order.status);
                 console.log('💳 Status do pagamento MP:', paymentData.status);
                 
-                // Atualizar status do pedido baseado no status do pagamento
+                // ✅ MELHORAR mapeamento de status
                 let newOrderStatus = order.status;
                 let newPaymentStatus = paymentData.status;
                 
                 switch (paymentData.status) {
                     case 'approved':
-                        newOrderStatus = 'processing';
+                        newOrderStatus = 'approved'; // ✅ Usar status 'approved' primeiro
                         newPaymentStatus = 'approved';
                         console.log('✅ Pagamento APROVADO para pedido:', order.orderNumber);
                         break;
@@ -634,31 +628,35 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
                     
                     // Reduzir estoque dos produtos
                     for (const item of order.items) {
-                        const updatedProduct = await Product.findByIdAndUpdate(
-                            item.productId,
-                            { $inc: { stock: -item.quantity } },
-                            { new: true }
-                        );
-                        console.log(`📦 Estoque atualizado - Produto: ${item.name}, Novo estoque: ${updatedProduct?.stock}`);
+                        if (item.productId) { // Verificar se productId existe
+                            const updatedProduct = await Product.findByIdAndUpdate(
+                                item.productId,
+                                { $inc: { stock: -item.quantity } },
+                                { new: true }
+                            );
+                            console.log(`📦 Estoque atualizado - Produto: ${item.name}, Novo estoque: ${updatedProduct?.stock}`);
+                        }
                     }
                     
                     // Atualizar estatísticas do usuário
-                    const updatedUser = await User.findByIdAndUpdate(
-                        order.customer.id,
-                        { 
-                            $inc: { 
-                                orderCount: 1,
-                                totalSpent: order.totals.total 
-                            }
-                        },
-                        { new: true }
-                    );
-                    
-                    console.log('👤 Estatísticas do usuário atualizadas:', {
-                        email: updatedUser?.email,
-                        orderCount: updatedUser?.orderCount,
-                        totalSpent: updatedUser?.totalSpent
-                    });
+                    if (order.customer.id) {
+                        const updatedUser = await User.findByIdAndUpdate(
+                            order.customer.id,
+                            { 
+                                $inc: { 
+                                    orderCount: 1,
+                                    totalSpent: order.totals.total 
+                                }
+                            },
+                            { new: true }
+                        );
+                        
+                        console.log('👤 Estatísticas do usuário atualizadas:', {
+                            email: updatedUser?.email,
+                            orderCount: updatedUser?.orderCount,
+                            totalSpent: updatedUser?.totalSpent
+                        });
+                    }
                 }
                 
                 console.log('=== WEBHOOK PROCESSADO COM SUCESSO ===');
@@ -672,7 +670,6 @@ app.post('/api/webhook/mercadopago', async (req, res) => {
         
     } catch (error) {
         console.error('💥 Erro geral no webhook:', error);
-        // Não retornar erro para evitar reenvios desnecessários
     }
 });
 

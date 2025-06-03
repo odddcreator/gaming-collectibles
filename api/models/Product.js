@@ -17,7 +17,39 @@ const productSchema = new mongoose.Schema({
     featured: { type: Boolean, default: false },
     active: { type: Boolean, default: true },
     tags: [String],
-    sku: String
+    sku: String,
+    
+    // ✅ NOVOS CAMPOS PARA STENCILS
+    hasPaintingOption: { type: Boolean, default: true }, // Para action figures = true, stencils = false
+    availableSizes: {
+        type: [String],
+        default: function() {
+            return this.category === 'stencil' 
+                ? ['30cm', '60cm', '90cm', '120cm', '180cm']
+                : ['small', 'medium', 'large'];
+        }
+    },
+    sizeMultipliers: {
+        type: Map,
+        of: Number,
+        default: function() {
+            if (this.category === 'stencil') {
+                return new Map([
+                    ['30cm', 1],
+                    ['60cm', 2],
+                    ['90cm', 3],
+                    ['120cm', 4],
+                    ['180cm', 5]
+                ]);
+            } else {
+                return new Map([
+                    ['small', 1],
+                    ['medium', 1.25],
+                    ['large', 1.5]
+                ]);
+            }
+        }
+    }
 }, {
     timestamps: true
 });

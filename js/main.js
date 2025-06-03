@@ -73,15 +73,74 @@ function loadFeaturedProducts() {
 
     featuredContainer.innerHTML = featuredProducts.map(product => `
         <div class="product-card" onclick="viewProduct('${product._id}')">
+            ${product.featured ? '<div class="product-badge featured">Destaque</div>' : ''}
             <div class="product-image">
-                <img src="${product.images[0] || 'assets/placeholder.jpg'}" alt="${product.name}">
+                <img src="${product.images[0] || 'assets/placeholder.jpg'}" 
+                     alt="${product.name}" 
+                     loading="lazy">
+                <div class="stock-indicator ${getStockStatus(product.stock).class}">
+                    ${getStockStatus(product.stock).label}
+                </div>
             </div>
             <div class="product-info">
+                <div class="product-game">${product.game}</div>
                 <h3 class="product-name">${product.name}</h3>
-                <p class="product-price">R$ ${formatPrice(product.basePrice)}</p>
+                <div class="product-price">R$ ${formatPrice(product.basePrice)}</div>
+                <div class="price-range">${getPriceRange(product)}</div>
+                <div class="product-actions">
+                    <button class="btn-quick-add" onclick="event.stopPropagation(); openQuickAdd('${product._id}')">
+                        Adicionar
+                    </button>
+                    <button class="btn-view" onclick="event.stopPropagation(); viewProduct('${product._id}')">
+                        Ver Detalhes
+                    </button>
+                </div>
             </div>
         </div>
     `).join('');
+}
+
+// ✅ ADICIONAR FUNÇÕES AUXILIARES
+function getStockStatus(stock) {
+    if (stock === 0) {
+        return { class: 'out-of-stock', label: 'Sob encomenda' };
+    } else if (stock <= 5) {
+        return { class: 'low-stock', label: `${stock} disponíveis` };
+    } else {
+        return { class: 'in-stock', label: 'Em estoque' };
+    }
+}
+
+function getPriceRange(product) {
+    if (!product.availableSizes || product.availableSizes.length === 0) {
+        return `A partir de R$ ${formatPrice(product.basePrice)}`;
+    }
+    
+    const prices = product.availableSizes.map(size => {
+        const multiplier = product.sizeMultipliers?.[size] || 1;
+        let price = product.basePrice * multiplier;
+        
+        // Se tem opção de pintura, considerar o preço com pintura também
+        if (product.hasPaintingOption) {
+            return [price, price * 1.75]; // sem e com pintura
+        }
+        return [price];
+    }).flat();
+    
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+    
+    if (minPrice === maxPrice) {
+        return `R$ ${formatPrice(minPrice)}`;
+    }
+    
+    return `R$ ${formatPrice(minPrice)} - R$ ${formatPrice(maxPrice)}`;
+}
+
+// ✅ PLACEHOLDER PARA QUICK ADD
+function openQuickAdd(productId) {
+    // Por enquanto, redirecionar para página do produto
+    viewProduct(productId);
 }
 
 function formatPrice(price) {

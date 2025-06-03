@@ -128,6 +128,7 @@
         <div class="modal-content large">
             <span class="close" onclick="closeAddProductForm()">&times;</span>
             <h2>Adicionar Produto</h2>
+            <!-- Substituir o form de produto no admin.html -->
             <form id="addProductForm" enctype="multipart/form-data">
                 <div class="form-grid">
                     <div class="form-group">
@@ -137,7 +138,7 @@
                     
                     <div class="form-group">
                         <label for="productCategory">Categoria:</label>
-                        <select id="productCategory" name="category" required>
+                        <select id="productCategory" name="category" required onchange="toggleProductOptions()">
                             <option value="action-figure">Action Figure</option>
                             <option value="stencil">Stencil</option>
                         </select>
@@ -161,6 +162,22 @@
                     <div class="form-group">
                         <label for="productStock">Estoque:</label>
                         <input type="number" id="productStock" name="stock" min="0">
+                    </div>
+                    
+                    <!-- ✅ NOVO: OPÇÃO DE PINTURA -->
+                    <div class="form-group" id="paintingOptionGroup">
+                        <label>
+                            <input type="checkbox" id="hasPaintingOption" name="hasPaintingOption" checked>
+                            Produto tem opção de pintura
+                        </label>
+                    </div>
+                    
+                    <!-- ✅ NOVO: TAMANHOS DISPONÍVEIS -->
+                    <div class="form-group full-width">
+                        <label>Tamanhos Disponíveis:</label>
+                        <div id="sizesContainer">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
                     </div>
                     
                     <div class="form-group full-width">
