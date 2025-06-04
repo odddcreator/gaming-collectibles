@@ -87,7 +87,13 @@ async function loadDashboardStats() {
         const [productsRes, ordersRes, usersRes] = await Promise.all([
             fetch(`${API_BASE_URL}/api/products`),
             fetch(`${API_BASE_URL}/api/orders`),
-            fetch(`${API_BASE_URL}/api/users`)
+            fetch(`${API_BASE_URL}/api/users`),
+            console.log("currentMonth: "+currentMonth),
+            console.log("monthOrders: "+monthOrders),
+            console.log("monthOrders.order: "+monthOrders.order),
+            console.log("monthOrders.total: "+monthOrders.total),
+            console.log("monthSales: "+monthSales),
+
         ]);
         
         const products = productsRes.ok ? await productsRes.json() : [];
@@ -159,8 +165,8 @@ async function loadOrders() {
                 <td>
                     ${order.items[0].name}<br>
                     ${order.items[0].size}<br>
-                    ${order.items[0].painting}<br>
-                    ${order.items[0].quantity}
+                    <span>Pintura: </span>${order.items[0].painting}<br>
+                    <span>Qtde: </span>${order.items[0].quantity}
                 </td>
                 <td>
                     <span class="status-badge status-${order.status}">
