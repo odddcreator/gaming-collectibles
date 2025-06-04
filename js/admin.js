@@ -157,6 +157,13 @@ async function loadOrders() {
                 <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
                 <td>R$ ${formatPrice(order.totals.total)}</td>
                 <td>
+                    <tr>${order.name}</tr>
+                    <tr>teste</td>
+                    <tr>${order.size}</tr>
+                    <tr>${order.painting}</tr>
+                    <tr>${order.quantity}</tr>
+                </td>
+                <td>
                     <span class="status-badge status-${order.status}">
                         ${getStatusLabel(order.status)}
                     </span>
@@ -173,14 +180,6 @@ async function loadOrders() {
                         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
                     </select>
                 </td>
-                <tr>
-                    <td>${order.name}</td>
-                    <td>teste</td>
-                    <td>${order.size}</td>
-                    <td>${order.painting}</td>
-                    <td>${order.quantity}</td>
-                    <td>${order.totalPrice}</td>
-                </tr>
             </tr>
         `).join('');
         
