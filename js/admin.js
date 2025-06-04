@@ -153,6 +153,7 @@ async function loadOrders() {
             <tr>
                 <td>#${order.orderNumber || order._id.slice(-6)}</td>
                 <td>${order.customer.name}</td>
+                <td>${order.customer.email}</td>
                 <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
                 <td>R$ ${formatPrice(order.totals.total)}</td>
                 <td>
@@ -172,6 +173,13 @@ async function loadOrders() {
                         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
                     </select>
                 </td>
+            </tr>
+            <tr>
+                <td>${order.orderItemSchema.name}</td>
+                <td>${order.orderItemSchema.size}</td>
+                <td>${order.orderItemSchema.painting}</td>
+                <td>${order.orderItemSchema.quantity}</td>
+                <td>${order.orderItemSchema.totalPrice}</td>
             </tr>
         `).join('');
         
