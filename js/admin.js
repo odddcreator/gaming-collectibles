@@ -99,8 +99,6 @@ async function loadDashboardStats() {
         document.getElementById('totalProducts').textContent = products.length;
         document.getElementById('pendingOrders').textContent = orders.filter(o => o.status === 'pending').length;
         document.getElementById('totalUsers').textContent = users.length;
-
-        logDashboardStats()
         
         // Calcular vendas do mês
         const currentMonth = new Date().getMonth();
