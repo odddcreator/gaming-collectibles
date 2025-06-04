@@ -108,11 +108,19 @@ async function loadDashboardStats() {
         const monthSales = monthOrders.reduce((total, order) => total + order.total, 0);
         document.getElementById('monthSales').textContent = `R$ ${formatPrice(monthSales)}`;
 
-        
+        logDashboardStats()
     } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
+        logDashboardStats()
     }
 }
+    function logDashboardStats() {
+        console.log("currentMonth: "+currentMonth),
+        console.log("monthOrders: "+monthOrders),
+        console.log("monthOrders.order: "+monthOrders.order),
+        console.log("monthOrders.total: "+monthOrders.total),
+        console.log("monthSales: "+monthSales)
+    }
 
 async function loadProducts() {
     try {
