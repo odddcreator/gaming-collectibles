@@ -173,13 +173,13 @@ async function loadOrders() {
                         <option value="cancelled" ${order.status === 'cancelled' ? 'selected' : ''}>Cancelado</option>
                     </select>
                 </td>
-            </tr>
-            <tr>
-                <td>${order.orderItemSchema.name}</td>
-                <td>${order.orderItemSchema.size}</td>
-                <td>${order.orderItemSchema.painting}</td>
-                <td>${order.orderItemSchema.quantity}</td>
-                <td>${order.orderItemSchema.totalPrice}</td>
+                <tr>
+                    <td>${order.orderItemSchema.name}</td>
+                    <td>${order.orderItemSchema.size}</td>
+                    <td>${order.orderItemSchema.painting}</td>
+                    <td>${order.orderItemSchema.quantity}</td>
+                    <td>${order.orderItemSchema.totalPrice}</td>
+                </tr>
             </tr>
         `).join('');
         
