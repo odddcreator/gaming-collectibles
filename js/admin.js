@@ -89,6 +89,8 @@ async function loadDashboardStats() {
             fetch(`${API_BASE_URL}/api/orders`),
             fetch(`${API_BASE_URL}/api/users`),
         ]);
+
+        logDashboardStats()
         
         const products = productsRes.ok ? await productsRes.json() : [];
         const orders = ordersRes.ok ? await ordersRes.json() : [];
@@ -97,12 +99,15 @@ async function loadDashboardStats() {
         document.getElementById('totalProducts').textContent = products.length;
         document.getElementById('pendingOrders').textContent = orders.filter(o => o.status === 'pending').length;
         document.getElementById('totalUsers').textContent = users.length;
+
+        logDashboardStats()
         
         // Calcular vendas do mês
         const currentMonth = new Date().getMonth();
         const monthOrders = orders.filter(order => {
             const orderDate = new Date(order.createdAt);
             return orderDate.getMonth() === currentMonth && order.status === 'completed';
+
         });
         
         const monthSales = monthOrders.reduce((total, order) => total + order.total, 0);
