@@ -175,6 +175,7 @@ async function loadOrders() {
                 </td>
                 <tr>
                     <td>${order.name}</td>
+                    <td>teste</td>
                     <td>${order.size}</td>
                     <td>${order.painting}</td>
                     <td>${order.quantity}</td>
