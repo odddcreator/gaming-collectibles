@@ -88,12 +88,6 @@ async function loadDashboardStats() {
             fetch(`${API_BASE_URL}/api/products`),
             fetch(`${API_BASE_URL}/api/orders`),
             fetch(`${API_BASE_URL}/api/users`),
-            console.log("currentMonth: "+currentMonth),
-            console.log("monthOrders: "+monthOrders),
-            console.log("monthOrders.order: "+monthOrders.order),
-            console.log("monthOrders.total: "+monthOrders.total),
-            console.log("monthSales: "+monthSales),
-
         ]);
         
         const products = productsRes.ok ? await productsRes.json() : [];
@@ -113,6 +107,11 @@ async function loadDashboardStats() {
         
         const monthSales = monthOrders.reduce((total, order) => total + order.total, 0);
         document.getElementById('monthSales').textContent = `R$ ${formatPrice(monthSales)}`;
+        console.log("currentMonth: "+currentMonth),
+        console.log("monthOrders: "+monthOrders),
+        console.log("monthOrders.order: "+monthOrders.order),
+        console.log("monthOrders.total: "+monthOrders.total),
+        console.log("monthSales: "+monthSales)
         
     } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
