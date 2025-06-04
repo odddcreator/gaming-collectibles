@@ -157,11 +157,10 @@ async function loadOrders() {
                 <td>${new Date(order.createdAt).toLocaleDateString('pt-BR')}</td>
                 <td>R$ ${formatPrice(order.totals.total)}</td>
                 <td>
-                    <tr>${order.name}</tr>
-                    <tr>teste</td>
-                    <tr>${order.size}</tr>
-                    <tr>${order.painting}</tr>
-                    <tr>${order.quantity}</tr>
+                    ${order.items.name}<br>
+                    ${order.items.size}<br>
+                    ${order.items.painting}<br>
+                    ${order.items.quantity}
                 </td>
                 <td>
                     <span class="status-badge status-${order.status}">
