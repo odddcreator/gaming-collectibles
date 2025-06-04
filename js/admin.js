@@ -100,28 +100,21 @@ async function loadDashboardStats() {
         
         // Calcular vendas do mês
         const currentMonth = new Date().getMonth();
+        console.log("currentMonth: "+currentMonth);
         const monthOrders = orders.filter(order => {
             const orderDate = new Date(order.createdAt);
             return orderDate.getMonth() === currentMonth && order.status === 'completed';
 
         });
-        
+        console.log("monthOrders: "+monthOrders);
         const monthSales = monthOrders.reduce((total, order) => total + order.total, 0);
         document.getElementById('monthSales').textContent = `R$ ${formatPrice(monthSales)}`;
+        console.log("monthSales: "+monthSales);
 
-        logDashboardStats()
     } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
-        logDashboardStats()
     }
 }
-    function logDashboardStats() {
-        console.log("currentMonth: "+currentMonth),
-        console.log("monthOrders: "+monthOrders),
-        console.log("monthOrders.order: "+monthOrders.order),
-        console.log("monthOrders.total: "+monthOrders.total),
-        console.log("monthSales: "+monthSales)
-    }
 
 async function loadProducts() {
     try {
