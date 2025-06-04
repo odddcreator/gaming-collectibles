@@ -76,8 +76,8 @@
     </footer>
 
     <!-- Cart Modal -->
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
+    <div id="cartModal" class="modalCart">
+        <div class="modalCart-content">
             <span class="close" onclick="closeCart()">&times;</span>
             <h2>Carrinho de Compras</h2>
             <div id="cartItems"></div>
@@ -100,18 +100,6 @@
             <div class="g_id_signin" data-type="standard"></div>
         </div>
     </div>
-
-    <!-- Cart Modal -->
-    <div id="cartModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeCart()">&times;</span>
-            <h2>Carrinho de Compras</h2>
-            <div id="cartItems"></div>
-            <div class="cart-total">
-                <strong>Total: R$ <span id="cartTotal">0,00</span></strong>
-            </div>
-            <button class="btn btn-primary" onclick="proceedToCheckout()">Finalizar Compra</button>
-        </div>
     </div>
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>

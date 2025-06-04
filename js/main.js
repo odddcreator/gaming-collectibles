@@ -85,12 +85,7 @@ function loadFeaturedProducts() {
             <div class="product-info">
                 <div class="product-game">${product.game}</div>
                 <h3 class="product-name">${product.name}</h3>
-                <div class="product-price">R$ ${formatPrice(product.basePrice)}</div>
-                <div class="price-range">${getPriceRange(product)}</div>
                 <div class="product-actions">
-                    <button class="btn-quick-add" onclick="event.stopPropagation(); openQuickAdd('${product._id}')">
-                        Adicionar
-                    </button>
                     <button class="btn-view" onclick="event.stopPropagation(); viewProduct('${product._id}')">
                         Ver Detalhes
                     </button>
