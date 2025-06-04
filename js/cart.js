@@ -99,21 +99,26 @@ function displayCartItems() {
         total += itemTotal;
         
         return `
-            <div class="cart-item">
-                <img src="${item.image}" alt="${item.name}" class="cart-item-image">
-                <div class="cart-item-info">
-                    <h4>${item.name}</h4>
-                    <p>Tamanho: ${getSizeLabel(item.size)}</p>
-                    <p>Pintura: ${item.painting ? 'Sim' : 'Não'}</p>
-                    <p>Preço: R$ ${formatPrice(item.finalPrice)}</p>
-                </div>
+
+        <div class="cart-item">
+                        <img src="${item.image || 'assets/placeholder.jpg'}" 
+                             alt="${item.name}" 
+                             class="cart-item-image">
+                        <div class="order-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-details">
+                                ${getSizeLabel(item.size)} • ${item.painting ? 'Com pintura' : 'Sem pintura'} • Qtd: ${item.quantity}
+                            </div>
+                        </div>
+                        <div class="cart-item-price">R$ ${formatPrice(item.totalPrice)}</div>
+                    
                 <div class="cart-item-controls">
                     <button onclick="updateCartQuantity(${index}, ${item.quantity - 1})">-</button>
                     <span>${item.quantity}</span>
                     <button onclick="updateCartQuantity(${index}, ${item.quantity + 1})">+</button>
                 </div>
                 <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
-            </div>
+        </div>
         `;
     }).join('');
     
