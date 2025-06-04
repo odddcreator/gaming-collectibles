@@ -174,11 +174,11 @@ async function loadOrders() {
                     </select>
                 </td>
                 <tr>
-                    <td>${order.orderItemSchema.name}</td>
-                    <td>${order.orderItemSchema.size}</td>
-                    <td>${order.orderItemSchema.painting}</td>
-                    <td>${order.orderItemSchema.quantity}</td>
-                    <td>${order.orderItemSchema.totalPrice}</td>
+                    <td>${order.name}</td>
+                    <td>${order.size}</td>
+                    <td>${order.painting}</td>
+                    <td>${order.quantity}</td>
+                    <td>${order.totalPrice}</td>
                 </tr>
             </tr>
         `).join('');
