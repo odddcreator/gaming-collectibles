@@ -89,8 +89,6 @@ async function loadDashboardStats() {
             fetch(`${API_BASE_URL}/api/orders`),
             fetch(`${API_BASE_URL}/api/users`),
         ]);
-
-        logDashboardStats()
         
         const products = productsRes.ok ? await productsRes.json() : [];
         const orders = ordersRes.ok ? await ordersRes.json() : [];
