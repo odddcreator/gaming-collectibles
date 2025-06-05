@@ -190,10 +190,10 @@ function createProductCard(product) {
                 <div class="product-price">R$ ${formatPrice(product.basePrice)}</div>
                 <div class="price-range">${priceRange}</div>
                 <div class="product-actions">
-                    <button class="btn-quick-add" onclick="event.stopPropagation(); openQuickAdd('${product._id}')">
+                    <button class="btn-quick-add" onclick="event.stopPropagation(); addToCart('${product._id}')">
                         Adicionar
                     </button>
-                    <button class="btn-view" onclick="event.stopPropagation(); viewProduct('${product._id}')">
+                    <button class="btn-view" onclick="event.stopPropagation(); addToCart('${product._id}')">
                         Ver
                     </button>
                 </div>
