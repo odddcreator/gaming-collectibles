@@ -99,25 +99,26 @@ function displayCartItems() {
         total += itemTotal;
         
         return `
-
-        <div class="cart-item">
-                        <img src="${item.image || 'assets/placeholder.jpg'}" 
-                             alt="${item.name}" 
-                             class="cart-item-image">
-                        <div class="order-item-info">
-                            <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-details">
-                                ${getSizeLabel(item.size)} • ${item.painting ? 'Com pintura' : 'Sem pintura'} • Qtd: ${item.quantity}
+        <div class="modalCart-content">
+            <div class="cart-item">
+                            <img src="${item.image || 'assets/placeholder.jpg'}" 
+                                alt="${item.name}" 
+                                class="cart-item-image">
+                            <div class="cart-item-info">
+                                <div class="cart-item-name">${item.name}</div>
+                                <div class="cart-item-details">
+                                    ${getSizeLabel(item.size)} • ${item.painting ? 'Com pintura' : 'Sem pintura'} • Qtd: ${item.quantity}
+                                </div>
                             </div>
-                        </div>
-                        <div class="cart-item-price">R$ ${formatPrice(item.totalPrice)}</div>
-                    
-                <div class="cart-item-controls">
-                    <button onclick="updateCartQuantity(${index}, ${item.quantity - 1})">-</button>
-                    <span>${item.quantity}</span>
-                    <button onclick="updateCartQuantity(${index}, ${item.quantity + 1})">+</button>
-                </div>
-                <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
+                            <div class="cart-item-price">R$ ${formatPrice(item.finalPrice)}</div>
+                        
+                    <div class="cart-item-controls">
+                        <button onclick="updateCartQuantity(${index}, ${item.quantity - 1})">-</button>
+                        <span>${item.quantity}</span>
+                        <button onclick="updateCartQuantity(${index}, ${item.quantity + 1})">+</button>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromCart(${index})">×</button>
+            </div>
         </div>
         `;
     }).join('');

@@ -107,7 +107,7 @@ async function loadDashboardStats() {
 
         });
         console.log("monthOrders: "+monthOrders);
-        const monthSales = monthOrders.reduce((total, order) => total + order.total, 0);
+        const monthSales = monthOrders.reduce((total, order) => total + order.totals.total, 0);
         document.getElementById('monthSales').textContent = `R$ ${formatPrice(monthSales)}`;
         console.log("monthSales: "+monthSales);
 
