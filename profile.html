@@ -33,11 +33,10 @@
         <div class="container">
             <div class="profile-container">
                 <div class="profile-sidebar">
-                    <div class="profile-header" onclick="loadUsernameEmail()" onload="loadUsernameEmail()">
+                    <div class="profile-header">
                         <!--<img src="" alt="Avatar" class="profile-avatar" id="profileAvatar">-->
-                        <script>
-                            <h2 id="profileName">${currentUser.name}</h2>;
-                            <p id="profileEmail">${currentUser.email}</p>
+                            <h2 id="profileName">Username</h2>;
+                            <p id="profileEmail"></p>Email</p>
                         </script>
                     </div>
                     
@@ -252,18 +251,7 @@
             <div class="g_id_signin" data-type="standard"></div>
         </div>
     </div>
-    <script>
-    function loadUsernameEmail() {
-        const userData = localStorage.getItem('userData');
-        const profileHeader = document.getElementById('profile-header');
-        
-        profileHeader.innerHTML = `
-            <h2 id="profileName">${currentUser.name}</h2>;
-            <p id="profileEmail">${currentUser.email}</p>
-            `
-        console.log("loadUsernameEmail")    
-    }
-    </script>
+
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="js/main.js"></script>
