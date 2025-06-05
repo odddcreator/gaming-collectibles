@@ -322,8 +322,7 @@ body {
 }
 
 .modalCart-content{
-    margin: 20%;
-    padding: 2rem;
+    padding: 10px;
     background-color: white;
     border-radius: 10px;
 }
