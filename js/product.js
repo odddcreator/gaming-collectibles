@@ -1,5 +1,5 @@
 let currentProduct = null;
-let selectedSize = 'small';
+let selectedSize = null;
 let selectedPainting = false;
 let selectedQuantity = 1;
 
@@ -22,18 +22,32 @@ async function loadProduct(productId) {
         const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
         if (response.ok) {
             currentProduct = await response.json();
+            console.log('📦 Produto carregado:', currentProduct);
+            
+            // ✅ Definir tamanho padrão baseado na categoria
+            if (currentProduct.category === 'stencil') {
+                selectedSize = currentProduct.availableSizes?.[0] || '30cm';
+                selectedPainting = false; // Stencils não têm pintura
+            } else {
+                selectedSize = currentProduct.availableSizes?.[0] || 'small';
+                selectedPainting = false; // Padrão sem pintura
+            }
+            
             displayProduct();
         } else {
             throw new Error('Produto não encontrado');
         }
     } catch (error) {
-        console.error('Erro ao carregar produto:', error);
+        console.error('❌ Erro ao carregar produto:', error);
         document.getElementById('productDetails').innerHTML = '<p>Erro ao carregar produto.</p>';
     }
 }
 
 function displayProduct() {
     const container = document.getElementById('productDetails');
+    
+    // ✅ ADAPTAR interface baseada na categoria
+    const isStencil = currentProduct.category === 'stencil';
     
     container.innerHTML = `
         <div class="product-gallery">
@@ -58,26 +72,26 @@ function displayProduct() {
                 <span>5.0</span>
             </div>
             <div class="product-price" id="productPrice">
-                R$ ${formatPrice(currentProduct.basePrice)}
+                R$ ${formatPrice(calculateCurrentPrice())}
             </div>
             
             <div class="product-options">
                 <div class="option-group">
-                    <label>Tamanho:</label>
+                    <label>${isStencil ? 'Tamanho:' : 'Tamanho:'}</label>
                     <div class="size-options">
-                        <button class="option-btn active" onclick="selectSize('small')">18 cm (1:10)</button>
-                        <button class="option-btn" onclick="selectSize('medium')">22 cm (1:8)</button>
-                        <button class="option-btn" onclick="selectSize('large')">26 cm (1:7)</button>
+                        ${generateSizeOptions()}
                     </div>
                 </div>
                 
+                ${!isStencil ? `
                 <div class="option-group">
                     <label>Pintura:</label>
                     <div class="painting-options">
-                        <button class="option-btn" onclick="selectPainting(false)">sem pintura</button>
+                        <button class="option-btn active" onclick="selectPainting(false)">sem pintura</button>
                         <button class="option-btn" onclick="selectPainting(true)">com pintura</button>
                     </div>
                 </div>
+                ` : ''}
             </div>
             
             <div class="quantity-selector">
@@ -113,29 +127,91 @@ function displayProduct() {
             <div class="description-tabs">
                 <button class="tab-btn active" onclick="showTab('description')">Descrição</button>
                 <button class="tab-btn" onclick="showTab('specifications')">Especificações</button>
+                ${isStencil ? '<button class="tab-btn" onclick="showTab(\'usage\')">Como Usar</button>' : ''}
             </div>
+            
             <div class="tab-content active" id="description">
                 <p>${currentProduct.description || 'Descrição não disponível.'}</p>
             </div>
+            
             <div class="tab-content" id="specifications">
                 <ul>
                     <li>Peso: ${currentProduct.weight || 'N/A'}g</li>
-                    <li>Material: PLA+</li>
+                    <li>Material: ${isStencil ? 'PVC flexível' : 'PLA+'}</li>
                     <li>Categoria: ${currentProduct.category}</li>
                     <li>Jogo: ${currentProduct.game}</li>
+                    ${isStencil ? '<li>Espessura: 0.25mm</li><li>Reutilizável: Sim</li>' : ''}
                 </ul>
             </div>
+            
+            ${isStencil ? `
+            <div class="tab-content" id="usage">
+                <div class="usage-steps">
+                    <div class="step">
+                        <h4>1. Posicionamento</h4>
+                        <p>Fixe o stencil na superfície com fita adesiva</p>
+                    </div>
+                    <div class="step">
+                        <h4>2. Aplicação</h4>
+                        <p>Use pincel ou rolo para aplicar a tinta</p>
+                    </div>
+                    <div class="step">
+                        <h4>3. Remoção</h4>
+                        <p>Retire cuidadosamente antes da tinta secar</p>
+                    </div>
+                    <div class="step">
+                        <h4>4. Limpeza</h4>
+                        <p>Lave com água e sabão para reutilizar</p>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
         </div>
     `;
+    
+    updatePrice();
 }
 
-function changeMainImage(imageSrc, index) {
-    document.getElementById('mainImage').src = imageSrc;
+function generateSizeOptions() {
+    if (!currentProduct.availableSizes) return '';
     
-    // Atualizar thumbnails ativas
-    document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
-        thumb.classList.toggle('active', i === index);
-    });
+    const isStencil = currentProduct.category === 'stencil';
+    
+    return currentProduct.availableSizes.map(size => {
+        let label = size;
+        
+        if (isStencil) {
+            const multiplier = currentProduct.sizeMultipliers?.[size] || 1;
+            label = `${size} (x${multiplier})`;
+        } else {
+            const labels = {
+                'small': '18cm (1:10)',
+                'medium': '22cm (1:8)',
+                'large': '26cm (1:7)'
+            };
+            label = labels[size] || size;
+        }
+        
+        const isFirst = size === currentProduct.availableSizes[0];
+        return `<button class="option-btn ${isFirst ? 'active' : ''}" onclick="selectSize('${size}')">${label}</button>`;
+    }).join('');
+}
+
+function calculateCurrentPrice() {
+    if (!currentProduct || !selectedSize) return currentProduct?.basePrice || 0;
+    
+    let price = currentProduct.basePrice;
+    
+    // Aplicar multiplicador de tamanho
+    const multiplier = currentProduct.sizeMultipliers?.[selectedSize] || 1;
+    price *= multiplier;
+    
+    // Aplicar multiplicador de pintura (só para action figures)
+    if (selectedPainting && currentProduct.hasPaintingOption) {
+        price *= 1.75;
+    }
+    
+    return price;
 }
 
 function selectSize(size) {
@@ -163,8 +239,19 @@ function selectPainting(hasPainting) {
 }
 
 function updatePrice() {
-    const finalPrice = calculatePrice(currentProduct.basePrice, selectedSize, selectedPainting);
-    document.getElementById('productPrice').textContent = `R$ ${formatPrice(finalPrice)}`;
+    const finalPrice = calculateCurrentPrice();
+    const priceElement = document.getElementById('productPrice');
+    if (priceElement) {
+        priceElement.textContent = `R$ ${formatPrice(finalPrice)}`;
+    }
+}
+
+function changeMainImage(imageSrc, index) {
+    document.getElementById('mainImage').src = imageSrc;
+    
+    document.querySelectorAll('.thumbnail').forEach((thumb, i) => {
+        thumb.classList.toggle('active', i === index);
+    });
 }
 
 function changeQuantity(delta) {
@@ -183,6 +270,7 @@ function updateQuantity() {
 }
 
 function addProductToCart() {
+    // ✅ USAR função do cart.js com parâmetros corretos
     addToCart(currentProduct._id, {
         size: selectedSize,
         painting: selectedPainting,
@@ -221,7 +309,6 @@ async function calculateShipping() {
     try {
         resultDiv.innerHTML = '<p>Calculando...</p>';
         
-        // Simular cálculo de frete (implementar API dos Correios)
         const weight = currentProduct.weight * selectedQuantity;
         const shippingOptions = await calculateShippingCost(cep, weight);
         

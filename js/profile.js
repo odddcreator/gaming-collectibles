@@ -50,26 +50,71 @@ async function initializeProfile() {
     }
 }
 
+// Corrigir a função loadUserProfile no profile.js
 function loadUserProfile() {
-    // Atualizar header do perfil
-    document.getElementById('profileName').textContent = currentUser.fullName || currentUser.name || 'Usuário';
-    document.getElementById('profileEmail').textContent = currentUser.email;
+    console.log('🔄 Carregando perfil do usuário:', currentUser);
     
-    const avatar = document.getElementById('profileAvatar');
-    if (currentUser.picture) {
-        avatar.src = currentUser.picture;
-    } else {
-        avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=1e3a8a&color=fff`;
+    // ✅ CORRIGIR atualização do header do perfil
+    const profileName = document.getElementById('profileName');
+    const profileEmail = document.getElementById('profileEmail');
+    const profileAvatar = document.getElementById('profileAvatar');
+    
+    if (profileName) {
+        profileName.textContent = currentUser.fullName || currentUser.name || 'Usuário';
+    }
+    
+    if (profileEmail) {
+        profileEmail.textContent = currentUser.email || 'email@exemplo.com';
+    }
+    
+    if (profileAvatar) {
+        if (currentUser.picture) {
+            profileAvatar.src = currentUser.picture;
+        } else {
+            const userName = currentUser.fullName || currentUser.name || 'User';
+            profileAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=1e3a8a&color=fff&size=80`;
+        }
     }
     
     // Preencher formulário de dados pessoais
     const form = document.getElementById('personalForm');
     if (form) {
-        form.fullName.value = currentUser.fullName || '';
-        form.phone.value = currentUser.phone || '';
-        form.birthDate.value = currentUser.birthDate ? currentUser.birthDate.split('T')[0] : '';
-        form.gender.value = currentUser.gender || '';
-        form.cpf.value = currentUser.cpf || '';
+        const fields = {
+            fullName: currentUser.fullName || currentUser.name || '',
+            phone: currentUser.phone || '',
+            birthDate: currentUser.birthDate ? currentUser.birthDate.split('T')[0] : '',
+            gender: currentUser.gender || '',
+            cpf: currentUser.cpf || ''
+        };
+        
+        Object.keys(fields).forEach(fieldName => {
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            if (field) {
+                field.value = fields[fieldName];
+            }
+        });
+    }
+}
+
+// ✅ CORRIGIR inicialização do profile
+document.addEventListener('DOMContentLoaded', function() {
+    if (!requireLogin('Faça login para acessar seu perfil')) {
+        return;
+    }
+    
+    console.log('🚀 Inicializando perfil...');
+    initializeProfile();
+});
+
+async function initializeProfile() {
+    try {
+        updateCartDisplay();
+        loadUserProfile(); // ✅ Chamar aqui
+        await loadUserAddresses();
+        await loadUserOrders();
+        setupFormHandlers();
+    } catch (error) {
+        console.error('❌ Erro ao inicializar perfil:', error);
     }
 }
 

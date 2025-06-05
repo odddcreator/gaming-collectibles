@@ -111,16 +111,19 @@ function getPriceRange(product) {
         return `A partir de R$ ${formatPrice(product.basePrice)}`;
     }
     
-    const prices = product.availableSizes.map(size => {
+    const prices = [];
+    
+    product.availableSizes.forEach(size => {
         const multiplier = product.sizeMultipliers?.[size] || 1;
-        let price = product.basePrice * multiplier;
+        let basePrice = product.basePrice * multiplier;
         
-        // Se tem opção de pintura, considerar o preço com pintura também
+        prices.push(basePrice);
+        
+        // Se tem opção de pintura, adicionar preço com pintura
         if (product.hasPaintingOption) {
-            return [price, price * 1.75]; // sem e com pintura
+            prices.push(basePrice * 1.75);
         }
-        return [price];
-    }).flat();
+    });
     
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
@@ -132,11 +135,11 @@ function getPriceRange(product) {
     return `R$ ${formatPrice(minPrice)} - R$ ${formatPrice(maxPrice)}`;
 }
 
-// ✅ PLACEHOLDER PARA QUICK ADD
+/*// ✅ PLACEHOLDER PARA QUICK ADD
 function openQuickAdd(productId) {
     // Por enquanto, redirecionar para página do produto
     viewProduct(productId);
-}
+}*/
 
 function formatPrice(price) {
     return new Intl.NumberFormat('pt-BR', {

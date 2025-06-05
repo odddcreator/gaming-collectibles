@@ -1,4 +1,3 @@
-// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -18,9 +17,7 @@ const productSchema = new mongoose.Schema({
     active: { type: Boolean, default: true },
     tags: [String],
     sku: String,
-    
-    // ✅ NOVOS CAMPOS PARA STENCILS
-    hasPaintingOption: { type: Boolean, default: true }, // Para action figures = true, stencils = false
+    hasPaintingOption: { type: Boolean, default: true },
     availableSizes: {
         type: [String],
         default: function() {

@@ -292,23 +292,36 @@ function toggleProductOptions() {
     }
 }
 
-// Atualizar o form handler
+// Corrigir o form handler no admin.js
 document.getElementById('addProductForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = new FormData(this);
     
-    // ✅ Processar tamanhos selecionados
+    // ✅ CORRIGIR processamento de tamanhos
     const availableSizes = [];
     const sizeInputs = document.querySelectorAll('input[name="availableSizes"]:checked');
     sizeInputs.forEach(input => availableSizes.push(input.value));
     
-    // Remover os checkboxes individuais do FormData
-    formData.delete('availableSizes');
+    // ✅ CORRIGIR processamento de booleans
+    const featured = document.getElementById('productFeatured').checked;
+    const hasPaintingOption = document.getElementById('hasPaintingOption').checked;
     
-    // Adicionar como array
+    // Remover os campos que vamos tratar manualmente
+    formData.delete('availableSizes');
+    formData.delete('featured');
+    formData.delete('hasPaintingOption');
+    
+    // Adicionar campos tratados
     formData.append('availableSizes', JSON.stringify(availableSizes));
-    formData.append('hasPaintingOption', document.getElementById('hasPaintingOption').checked);
+    formData.append('featured', featured.toString());
+    formData.append('hasPaintingOption', hasPaintingOption.toString());
+    
+    console.log('📋 Dados do formulário:', {
+        availableSizes: availableSizes,
+        featured: featured,
+        hasPaintingOption: hasPaintingOption
+    });
     
     try {
         const response = await fetch(`${API_BASE_URL}/api/products`, {
@@ -318,18 +331,19 @@ document.getElementById('addProductForm').addEventListener('submit', async funct
         
         if (response.ok) {
             const product = await response.json();
-            console.log('Produto criado:', product);
+            console.log('✅ Produto criado:', product);
             alert('Produto adicionado com sucesso!');
             closeAddProductForm();
             loadProducts();
             loadDashboardStats();
         } else {
-            const error = await response.text();
-            alert('Erro ao adicionar produto: ' + error);
+            const errorData = await response.json();
+            console.error('❌ Erro da API:', errorData);
+            alert('Erro ao adicionar produto: ' + JSON.stringify(errorData));
         }
     } catch (error) {
-        console.error('Erro ao adicionar produto:', error);
-        alert('Erro ao adicionar produto');
+        console.error('❌ Erro ao adicionar produto:', error);
+        alert('Erro ao adicionar produto: ' + error.message);
     }
 });
 

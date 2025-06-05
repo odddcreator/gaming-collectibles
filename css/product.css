@@ -221,3 +221,28 @@
         flex-direction: column;
     }
 }
+
+.usage-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.step {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.step h4 {
+    color: #1e3a8a;
+    margin-bottom: 0.5rem;
+}
+
+.step p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}

@@ -338,18 +338,50 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
     try {
         const productData = req.body;
         
-        // Processar imagens com URL completa do backend
+        // ✅ CORRIGIR parsing de arrays e booleans
+        if (typeof productData.availableSizes === 'string') {
+            try {
+                productData.availableSizes = JSON.parse(productData.availableSizes);
+            } catch (e) {
+                productData.availableSizes = [productData.availableSizes];
+            }
+        }
+        
+        // ✅ CORRIGIR boolean parsing
+        productData.featured = productData.featured === 'true' || productData.featured === true;
+        productData.hasPaintingOption = productData.hasPaintingOption === 'true' || productData.hasPaintingOption === true;
+        
+        // ✅ GERAR sizeMultipliers baseado na categoria
+        if (productData.category === 'stencil') {
+            productData.sizeMultipliers = {
+                '30cm': 1,
+                '60cm': 2,
+                '90cm': 3,
+                '120cm': 4,
+                '180cm': 5
+            };
+        } else {
+            productData.sizeMultipliers = {
+                'small': 1,
+                'medium': 1.25,
+                'large': 1.5
+            };
+        }
+        
+        // Processar imagens
         if (req.files && req.files.length > 0) {
             productData.images = req.files.map(file => 
                 `${process.env.API_URL || 'https://gaming-collectibles-api.onrender.com'}/uploads/${file.filename}`
             );
         }
         
+        console.log('📦 Dados do produto processados:', productData);
+        
         const product = new Product(productData);
         await product.save();
         res.status(201).json(product);
     } catch (error) {
-        console.error('Erro ao criar produto:', error);
+        console.error('❌ Erro ao criar produto:', error);
         res.status(400).json({ error: error.message });
     }
 });
