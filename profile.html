@@ -250,11 +250,12 @@
     </div>
     <script>
     function loadUsernameEmail() {
+        const userData = localStorage.getItem('userData');
         const profileHeader = document.getElementById('profile-header');
         
         profileHeader.innerHTML = `
-            <h2 id="profileName">${user.name}</h2>;
-            <p id="profileEmail">${user.email}</p>
+            <h2 id="profileName">${currentuser.name}</h2>;
+            <p id="profileEmail">${currentuser.email}</p>
             `
         console.log("loadUsernameEmail")    
     }
