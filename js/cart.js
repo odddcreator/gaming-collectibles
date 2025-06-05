@@ -99,7 +99,7 @@ function displayCartItems() {
         total += itemTotal;
         
         return `
-        <div class="modalCart-content">
+        <div class="modalCart-contentIn">
             <div class="cart-item">
                             <img src="${item.image || 'assets/placeholder.jpg'}" 
                                 alt="${item.name}" 

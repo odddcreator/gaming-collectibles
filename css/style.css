@@ -324,6 +324,17 @@ body {
 
 .modalCart-content{
     justify-self: center;
+    min-width: 400px;
+    max-width: 800px;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+}
+
+.modalCart-contentIn{
+    justify-self: center;
+    justify-content: left;
+    min-width: 400px;
     max-width: 800px;
     padding: 10px;
     background-color: white;
@@ -354,17 +365,20 @@ body {
 }
 
 .cart-item-name {
+    width: 300px;
     font-weight: 500;
     color: #374151;
     margin-bottom: 0.25rem;
 }
 
 .cart-item-details {
+    width: 200px;
     font-size: 0.875rem;
     color: #6b7280;
 }
 
 .cart-item-price {
+    width: 100px;
     font-weight: 600;
     color: #1e3a8a;
 }
@@ -376,10 +390,14 @@ body {
     color: #1e3a8a;
 }
 
+.cart-item-controls {
+    width: 150px;
+}
+
 
 .close {
     top: 10px;
-    margin-left: 90%;
+    margin-left: 95%;
     font-size: 2rem;
     cursor: pointer;
 }
