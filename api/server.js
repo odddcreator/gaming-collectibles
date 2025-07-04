@@ -441,6 +441,103 @@ app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
     }
 });
 
+// Adicionar endpoint PUT para atualizar produtos
+app.put('/api/products/:id', upload.array('images', 5), async (req, res) => {
+    try {
+        const productId = req.params.id;
+        const updateData = req.body;
+        
+        console.log('🔄 Atualizando produto:', productId);
+        console.log('📝 Dados recebidos:', updateData);
+        
+        // Buscar produto atual
+        const currentProduct = await Product.findById(productId);
+        if (!currentProduct) {
+            return res.status(404).json({ error: 'Produto não encontrado' });
+        }
+        
+        // Processar availableSizes
+        if (updateData.availableSizes) {
+            if (typeof updateData.availableSizes === 'string') {
+                try {
+                    updateData.availableSizes = JSON.parse(updateData.availableSizes);
+                } catch (e) {
+                    updateData.availableSizes = [updateData.availableSizes];
+                }
+            }
+        }
+        
+        // Processar booleans
+        updateData.featured = updateData.featured === 'true';
+        updateData.hasPaintingOption = updateData.hasPaintingOption === 'true';
+        updateData.active = updateData.active === 'true';
+        
+        // Processar sizeMultipliers
+        if (updateData.availableSizes) {
+            updateData.sizeMultipliers = {};
+            
+            if (updateData.category === 'stencil') {
+                const stencilMultipliers = {
+                    '30cm': 1, '60cm': 2, '90cm': 3, '120cm': 4, '180cm': 5
+                };
+                updateData.availableSizes.forEach(size => {
+                    updateData.sizeMultipliers[size] = stencilMultipliers[size] || 1;
+                });
+            } else {
+                const actionFigureMultipliers = {
+                    'small': 1, 'medium': 1.25, 'large': 1.5
+                };
+                updateData.availableSizes.forEach(size => {
+                    updateData.sizeMultipliers[size] = actionFigureMultipliers[size] || 1;
+                });
+            }
+        }
+        
+        // Processar imagens
+        let finalImages = [...(currentProduct.images || [])];
+        
+        // Remover imagens marcadas para remoção
+        if (updateData.imagesToRemove) {
+            const imagesToRemove = JSON.parse(updateData.imagesToRemove);
+            finalImages = finalImages.filter(img => !imagesToRemove.includes(img));
+            console.log('🗑️ Imagens removidas:', imagesToRemove);
+        }
+        
+        // Adicionar novas imagens
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(file => 
+                `${process.env.API_URL || 'https://gaming-collectibles-api.onrender.com'}/uploads/${file.filename}`
+            );
+            finalImages = [...finalImages, ...newImages];
+            console.log('📸 Novas imagens adicionadas:', newImages);
+        }
+        
+        updateData.images = finalImages;
+        
+        // Remover campos de controle
+        delete updateData.imagesToRemove;
+        
+        console.log('💾 Dados finais para atualização:', {
+            ...updateData,
+            images: `${finalImages.length} imagens`
+        });
+        
+        // Atualizar produto
+        const updatedProduct = await Product.findByIdAndUpdate(
+            productId, 
+            updateData, 
+            { new: true, runValidators: true }
+        );
+        
+        console.log('✅ Produto atualizado com sucesso');
+        res.json(updatedProduct);
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar produto:', error);
+        res.status(400).json({ error: error.message });
+    }
+});
+
 app.delete('/api/products/:id', async (req, res) => {
     try {
         await Product.findByIdAndUpdate(req.params.id, { active: false });

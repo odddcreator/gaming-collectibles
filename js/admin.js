@@ -1,4 +1,6 @@
 let isAdminAuthenticated = false;
+let currentEditingProduct = null;
+let imagesToRemove = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAdminAuth();
@@ -395,10 +397,258 @@ async function updateOrderStatus(orderId, newStatus) {
     }
 }
 
-function editProduct(productId) {
-    // Implementar edição de produto
-    alert('Funcionalidade de edição em desenvolvimento');
+// ✅ IMPLEMENTAR função editProduct
+async function editProduct(productId) {
+    try {
+        console.log('📝 Editando produto:', productId);
+        
+        // Buscar dados do produto
+        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`);
+        if (!response.ok) {
+            throw new Error('Produto não encontrado');
+        }
+        
+        const product = await response.json();
+        console.log('📦 Produto carregado:', product);
+        
+        currentEditingProduct = product;
+        imagesToRemove = [];
+        
+        // Preencher formulário
+        populateEditForm(product);
+        
+        // Mostrar modal
+        document.getElementById('editProductModal').style.display = 'block';
+        
+    } catch (error) {
+        console.error('❌ Erro ao carregar produto:', error);
+        alert('Erro ao carregar produto: ' + error.message);
+    }
 }
+
+// ✅ Preencher formulário de edição
+function populateEditForm(product) {
+    console.log('📋 Preenchendo formulário com:', product);
+    
+    // Campos básicos
+    document.getElementById('editProductId').value = product._id;
+    document.getElementById('editProductName').value = product.name || '';
+    document.getElementById('editProductCategory').value = product.category || 'action-figure';
+    document.getElementById('editProductGame').value = product.game || '';
+    document.getElementById('editProductPrice').value = product.basePrice || '';
+    document.getElementById('editProductWeight').value = product.weight || '';
+    document.getElementById('editProductStock').value = product.stock || '';
+    document.getElementById('editProductDescription').value = product.description || '';
+    
+    // Checkboxes
+    document.getElementById('editHasPaintingOption').checked = product.hasPaintingOption !== false;
+    document.getElementById('editProductFeatured').checked = product.featured || false;
+    document.getElementById('editProductActive').checked = product.active !== false;
+    
+    // Configurar opções baseadas na categoria
+    toggleEditProductOptions();
+    
+    // Preencher tamanhos disponíveis
+    populateEditSizes(product);
+    
+    // Mostrar imagens atuais
+    displayCurrentImages(product.images || []);
+}
+
+// ✅ Configurar opções baseadas na categoria (edição)
+function toggleEditProductOptions() {
+    const category = document.getElementById('editProductCategory').value;
+    const paintingGroup = document.getElementById('editPaintingOptionGroup');
+    const sizesContainer = document.getElementById('editSizesContainer');
+    const hasPaintingCheckbox = document.getElementById('editHasPaintingOption');
+    
+    if (category === 'stencil') {
+        // Stencils não têm pintura
+        hasPaintingCheckbox.checked = false;
+        paintingGroup.style.display = 'none';
+        
+        // Tamanhos para stencils
+        sizesContainer.innerHTML = `
+            <div class="sizes-grid">
+                <label><input type="checkbox" name="editAvailableSizes" value="30cm"> 30cm (x1)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="60cm"> 60cm (x2)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="90cm"> 90cm (x3)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="120cm"> 120cm (x4)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="180cm"> 180cm (x5)</label>
+            </div>
+        `;
+    } else {
+        // Action figures têm pintura
+        paintingGroup.style.display = 'block';
+        
+        // Tamanhos para action figures
+        sizesContainer.innerHTML = `
+            <div class="sizes-grid">
+                <label><input type="checkbox" name="editAvailableSizes" value="small"> 18cm (1:10)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="medium"> 22cm (1:8)</label>
+                <label><input type="checkbox" name="editAvailableSizes" value="large"> 26cm (1:7)</label>
+            </div>
+        `;
+    }
+}
+
+// ✅ Preencher tamanhos selecionados
+function populateEditSizes(product) {
+    const availableSizes = product.availableSizes || [];
+    console.log('📏 Tamanhos disponíveis:', availableSizes);
+    
+    // Aguardar um pouco para o HTML ser renderizado
+    setTimeout(() => {
+        const sizeCheckboxes = document.querySelectorAll('input[name="editAvailableSizes"]');
+        sizeCheckboxes.forEach(checkbox => {
+            checkbox.checked = availableSizes.includes(checkbox.value);
+        });
+    }, 100);
+}
+
+// ✅ Mostrar imagens atuais
+function displayCurrentImages(images) {
+    const container = document.getElementById('currentImages');
+    
+    if (!images || images.length === 0) {
+        container.innerHTML = '<div class="image-placeholder">Nenhuma imagem</div>';
+        return;
+    }
+    
+    container.innerHTML = images.map((image, index) => `
+        <div class="current-image" data-image-url="${image}">
+            <img src="${image}" alt="Imagem ${index + 1}">
+            <button type="button" class="remove-image" onclick="markImageForRemoval('${image}', this)">×</button>
+        </div>
+    `).join('');
+}
+
+// ✅ Marcar imagem para remoção
+function markImageForRemoval(imageUrl, button) {
+    const imageDiv = button.parentElement;
+    
+    if (imageDiv.classList.contains('marked-for-removal')) {
+        // Desmarcar
+        imageDiv.classList.remove('marked-for-removal');
+        imageDiv.style.opacity = '1';
+        button.textContent = '×';
+        button.style.background = '#ef4444';
+        
+        const index = imagesToRemove.indexOf(imageUrl);
+        if (index > -1) {
+            imagesToRemove.splice(index, 1);
+        }
+    } else {
+        // Marcar para remoção
+        imageDiv.classList.add('marked-for-removal');
+        imageDiv.style.opacity = '0.5';
+        button.textContent = '↶';
+        button.style.background = '#059669';
+        
+        if (!imagesToRemove.includes(imageUrl)) {
+            imagesToRemove.push(imageUrl);
+        }
+    }
+    
+    console.log('🗑️ Imagens marcadas para remoção:', imagesToRemove);
+}
+
+// ✅ Preview de novas imagens (edição)
+document.getElementById('editProductImages').addEventListener('change', function(e) {
+    const preview = document.getElementById('editImagePreview');
+    preview.innerHTML = '';
+    
+    for (let file of e.target.files) {
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.width = '100px';
+            img.style.height = '100px';
+            img.style.objectFit = 'cover';
+            img.style.margin = '5px';
+            img.style.borderRadius = '8px';
+            preview.appendChild(img);
+        }
+    }
+});
+
+// ✅ Fechar modal de edição
+function closeEditProductForm() {
+    document.getElementById('editProductModal').style.display = 'none';
+    document.getElementById('editProductForm').reset();
+    document.getElementById('editImagePreview').innerHTML = '';
+    currentEditingProduct = null;
+    imagesToRemove = [];
+}
+
+// ✅ Handler do formulário de edição
+document.getElementById('editProductForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const productId = document.getElementById('editProductId').value;
+    
+    console.log('💾 Atualizando produto:', productId);
+    
+    // Processar tamanhos selecionados
+    const availableSizes = [];
+    const sizeInputs = document.querySelectorAll('input[name="editAvailableSizes"]:checked');
+    sizeInputs.forEach(input => availableSizes.push(input.value));
+    
+    // Processar booleans
+    const featured = document.getElementById('editProductFeatured').checked;
+    const hasPaintingOption = document.getElementById('editHasPaintingOption').checked;
+    const active = document.getElementById('editProductActive').checked;
+    
+    // Remover campos que vamos tratar manualmente
+    formData.delete('editAvailableSizes');
+    formData.delete('featured');
+    formData.delete('hasPaintingOption');
+    formData.delete('active');
+    formData.delete('productId');
+    
+    // Adicionar campos tratados
+    formData.append('availableSizes', JSON.stringify(availableSizes));
+    formData.append('featured', featured.toString());
+    formData.append('hasPaintingOption', hasPaintingOption.toString());
+    formData.append('active', active.toString());
+    
+    // Adicionar imagens para remoção
+    if (imagesToRemove.length > 0) {
+        formData.append('imagesToRemove', JSON.stringify(imagesToRemove));
+    }
+    
+    console.log('📤 Enviando dados:', {
+        availableSizes: availableSizes,
+        featured: featured,
+        hasPaintingOption: hasPaintingOption,
+        active: active,
+        imagesToRemove: imagesToRemove
+    });
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+            method: 'PUT',
+            body: formData
+        });
+        
+        if (response.ok) {
+            const product = await response.json();
+            console.log('✅ Produto atualizado:', product);
+            alert('Produto atualizado com sucesso!');
+            closeEditProductForm();
+            loadProducts();
+            loadDashboardStats();
+        } else {
+            const errorData = await response.json();
+            console.error('❌ Erro da API:', errorData);
+            alert('Erro ao atualizar produto: ' + JSON.stringify(errorData));
+        }
+    } catch (error) {
+        console.error('❌ Erro ao atualizar produto:', error);
+        alert('Erro ao atualizar produto: ' + error.message);
+    }
+});
 
 function viewOrder(orderId) {
     // Implementar visualização de pedido
@@ -409,3 +659,21 @@ function viewUser(userId) {
     // Implementar visualização de usuário
     alert('Funcionalidade de visualização em desenvolvimento');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar eventos
+    toggleProductOptions(); // Para o form de criar
+    
+    // Fechar modais ao clicar fora
+    window.onclick = function(event) {
+        const addModal = document.getElementById('addProductModal');
+        const editModal = document.getElementById('editProductModal');
+        
+        if (event.target === addModal) {
+            closeAddProductForm();
+        }
+        if (event.target === editModal) {
+            closeEditProductForm();
+        }
+    };
+});

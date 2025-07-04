@@ -208,6 +208,108 @@
             </form>
         </div>
     </div>
+    <!-- Adicionar este modal após o modal de adicionar produto -->
+    <!-- Edit Product Modal -->
+    <div id="editProductModal" class="modal">
+        <div class="modal-content large">
+            <span class="close" onclick="closeEditProductForm()">&times;</span>
+            <h2>Editar Produto</h2>
+            <form id="editProductForm" enctype="multipart/form-data">
+                <input type="hidden" id="editProductId" name="productId">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editProductName">Nome do Produto:</label>
+                        <input type="text" id="editProductName" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductCategory">Categoria:</label>
+                        <select id="editProductCategory" name="category" required onchange="toggleEditProductOptions()">
+                            <option value="action-figure">Action Figure</option>
+                            <option value="stencil">Stencil</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductGame">Jogo:</label>
+                        <input type="text" id="editProductGame" name="game" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductPrice">Preço Base (R$):</label>
+                        <input type="number" id="editProductPrice" name="basePrice" step="0.01" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductWeight">Peso (g):</label>
+                        <input type="number" id="editProductWeight" name="weight" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editProductStock">Estoque:</label>
+                        <input type="number" id="editProductStock" name="stock" min="0">
+                    </div>
+                    
+                    <!-- Opção de pintura -->
+                    <div class="form-group" id="editPaintingOptionGroup">
+                        <label>
+                            <input type="checkbox" id="editHasPaintingOption" name="hasPaintingOption">
+                            Produto tem opção de pintura
+                        </label>
+                    </div>
+                    
+                    <!-- Tamanhos disponíveis -->
+                    <div class="form-group full-width">
+                        <label>Tamanhos Disponíveis:</label>
+                        <div id="editSizesContainer">
+                            <!-- Será preenchido dinamicamente -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="editProductDescription">Descrição:</label>
+                        <textarea id="editProductDescription" name="description" rows="4"></textarea>
+                    </div>
+                    
+                    <!-- Imagens existentes -->
+                    <div class="form-group full-width">
+                        <label>Imagens Atuais:</label>
+                        <div id="currentImages" class="current-images">
+                            <!-- Imagens atuais serão mostradas aqui -->
+                        </div>
+                    </div>
+                    
+                    <!-- Novas imagens -->
+                    <div class="form-group full-width">
+                        <label for="editProductImages">Adicionar Novas Imagens (opcional):</label>
+                        <input type="file" id="editProductImages" name="images" multiple accept="image/*">
+                        <div id="editImagePreview" class="image-preview"></div>
+                        <small>Deixe em branco para manter as imagens atuais</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="editProductFeatured" name="featured">
+                            Produto em destaque
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="editProductActive" name="active">
+                            Produto ativo
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" onclick="closeEditProductForm()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Atualizar Produto</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script src="https://sdk.mercadopago.com/js/v2"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
