@@ -173,17 +173,56 @@ function displayProduct() {
 }
 
 function generateSizeOptions() {
-    if (!currentProduct.availableSizes) return '';
+    console.log('🔍 Gerando opções de tamanho para:', currentProduct);
+    console.log('📏 availableSizes:', currentProduct.availableSizes);
+    console.log('📊 sizeMultipliers:', currentProduct.sizeMultipliers);
+    
+    if (!currentProduct.availableSizes) {
+        console.warn('⚠️ availableSizes não encontrado');
+        return '';
+    }
+    
+    // ✅ VERIFICAR se availableSizes é array ou string
+    let sizesArray = currentProduct.availableSizes;
+    
+    if (typeof sizesArray === 'string') {
+        try {
+            sizesArray = JSON.parse(sizesArray);
+            console.log('🔄 availableSizes convertido de string para array:', sizesArray);
+        } catch (e) {
+            console.warn('⚠️ Erro ao converter availableSizes string:', e);
+            sizesArray = [sizesArray];
+        }
+    }
+    
+    if (!Array.isArray(sizesArray)) {
+        console.warn('⚠️ availableSizes não é um array:', typeof sizesArray);
+        return '';
+    }
     
     const isStencil = currentProduct.category === 'stencil';
+    console.log('🏷️ É stencil?', isStencil);
     
-    return currentProduct.availableSizes.map(size => {
+    return sizesArray.map((size, index) => {
         let label = size;
         
         if (isStencil) {
-            const multiplier = currentProduct.sizeMultipliers?.[size] || 1;
+            // Para stencils, usar multiplier do sizeMultipliers
+            let multiplier = 1;
+            
+            if (currentProduct.sizeMultipliers) {
+                // Se sizeMultipliers é um Map (do MongoDB)
+                if (currentProduct.sizeMultipliers instanceof Map) {
+                    multiplier = currentProduct.sizeMultipliers.get(size) || 1;
+                } else if (typeof currentProduct.sizeMultipliers === 'object') {
+                    // Se é um objeto normal
+                    multiplier = currentProduct.sizeMultipliers[size] || 1;
+                }
+            }
+            
             label = `${size} (x${multiplier})`;
         } else {
+            // Para action figures, usar labels fixos
             const labels = {
                 'small': '18cm (1:10)',
                 'medium': '22cm (1:8)',
@@ -192,25 +231,45 @@ function generateSizeOptions() {
             label = labels[size] || size;
         }
         
-        const isFirst = size === currentProduct.availableSizes[0];
+        const isFirst = index === 0;
+        console.log(`🏷️ Tamanho ${size}: label="${label}", isFirst=${isFirst}`);
+        
         return `<button class="option-btn ${isFirst ? 'active' : ''}" onclick="selectSize('${size}')">${label}</button>`;
     }).join('');
 }
 
 function calculateCurrentPrice() {
-    if (!currentProduct || !selectedSize) return currentProduct?.basePrice || 0;
+    if (!currentProduct || !selectedSize) {
+        console.warn('⚠️ Produto ou tamanho não selecionado');
+        return currentProduct?.basePrice || 0;
+    }
     
     let price = currentProduct.basePrice;
+    console.log('💰 Preço base:', price);
     
     // Aplicar multiplicador de tamanho
-    const multiplier = currentProduct.sizeMultipliers?.[selectedSize] || 1;
+    let multiplier = 1;
+    
+    if (currentProduct.sizeMultipliers) {
+        // Se sizeMultipliers é um Map (do MongoDB)
+        if (currentProduct.sizeMultipliers instanceof Map) {
+            multiplier = currentProduct.sizeMultipliers.get(selectedSize) || 1;
+        } else if (typeof currentProduct.sizeMultipliers === 'object') {
+            // Se é um objeto normal
+            multiplier = currentProduct.sizeMultipliers[selectedSize] || 1;
+        }
+    }
+    
+    console.log('📏 Multiplicador do tamanho', selectedSize, ':', multiplier);
     price *= multiplier;
     
     // Aplicar multiplicador de pintura (só para action figures)
     if (selectedPainting && currentProduct.hasPaintingOption) {
+        console.log('🎨 Aplicando multiplicador de pintura: 1.75');
         price *= 1.75;
     }
     
+    console.log('💰 Preço final calculado:', price);
     return price;
 }
 

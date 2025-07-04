@@ -337,36 +337,66 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', upload.array('images', 5), async (req, res) => {
     try {
         const productData = req.body;
+        console.log('📦 Dados recebidos do form:', productData);
         
-        // ✅ CORRIGIR parsing de arrays e booleans
-        if (typeof productData.availableSizes === 'string') {
-            try {
-                productData.availableSizes = JSON.parse(productData.availableSizes);
-            } catch (e) {
+        // ✅ CORRIGIR parsing de availableSizes
+        if (productData.availableSizes) {
+            if (typeof productData.availableSizes === 'string') {
+                try {
+                    // Tentar fazer parse do JSON
+                    productData.availableSizes = JSON.parse(productData.availableSizes);
+                    console.log('✅ availableSizes parseado:', productData.availableSizes);
+                } catch (e) {
+                    console.warn('⚠️ Erro ao fazer parse de availableSizes, usando como array single:', e);
+                    productData.availableSizes = [productData.availableSizes];
+                }
+            }
+            
+            // Garantir que é um array
+            if (!Array.isArray(productData.availableSizes)) {
                 productData.availableSizes = [productData.availableSizes];
             }
+        } else {
+            // Definir tamanhos padrão se não especificado
+            productData.availableSizes = productData.category === 'stencil' 
+                ? ['30cm', '60cm', '90cm', '120cm', '180cm']
+                : ['small', 'medium', 'large'];
         }
+        
+        console.log('🔄 availableSizes final:', productData.availableSizes);
         
         // ✅ CORRIGIR boolean parsing
         productData.featured = productData.featured === 'true' || productData.featured === true;
         productData.hasPaintingOption = productData.hasPaintingOption === 'true' || productData.hasPaintingOption === true;
         
-        // ✅ GERAR sizeMultipliers baseado na categoria
+        // ✅ GERAR sizeMultipliers baseado na categoria e tamanhos selecionados
+        productData.sizeMultipliers = {};
+        
         if (productData.category === 'stencil') {
-            productData.sizeMultipliers = {
+            const stencilMultipliers = {
                 '30cm': 1,
                 '60cm': 2,
                 '90cm': 3,
                 '120cm': 4,
                 '180cm': 5
             };
+            
+            productData.availableSizes.forEach(size => {
+                productData.sizeMultipliers[size] = stencilMultipliers[size] || 1;
+            });
         } else {
-            productData.sizeMultipliers = {
+            const actionFigureMultipliers = {
                 'small': 1,
                 'medium': 1.25,
                 'large': 1.5
             };
+            
+            productData.availableSizes.forEach(size => {
+                productData.sizeMultipliers[size] = actionFigureMultipliers[size] || 1;
+            });
         }
+        
+        console.log('🔄 sizeMultipliers final:', productData.sizeMultipliers);
         
         // Processar imagens
         if (req.files && req.files.length > 0) {
@@ -375,11 +405,21 @@ app.post('/api/products', upload.array('images', 5), async (req, res) => {
             );
         }
         
-        console.log('📦 Dados do produto processados:', productData);
+        console.log('📦 Dados finais do produto:', {
+            name: productData.name,
+            category: productData.category,
+            availableSizes: productData.availableSizes,
+            sizeMultipliers: productData.sizeMultipliers,
+            featured: productData.featured,
+            hasPaintingOption: productData.hasPaintingOption
+        });
         
         const product = new Product(productData);
         await product.save();
+        
+        console.log('✅ Produto salvo com sucesso:', product._id);
         res.status(201).json(product);
+        
     } catch (error) {
         console.error('❌ Erro ao criar produto:', error);
         res.status(400).json({ error: error.message });
